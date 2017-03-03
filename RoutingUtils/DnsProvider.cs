@@ -1,12 +1,8 @@
 ﻿using System.Net;
+using NetworkRouting;
 
-namespace NetworkRouting
+namespace RoutingUtils
 {
-    public interface IDnsProvider
-    {
-        IPHostEntry GetHostEntry(string hostNameOrAddress);
-    }
-
     public class DnsProvider : IDnsProvider
     {
         public IPHostEntry GetHostEntry(string hostNameOrAddress)

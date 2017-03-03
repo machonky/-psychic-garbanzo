@@ -2,6 +2,7 @@
 using System.Net;
 using CoreDht;
 using Routing;
+using RoutingUtils;
 
 namespace NetworkRouting
 {
@@ -18,7 +19,7 @@ namespace NetworkRouting
                 var join = new JoinNetwork("Hi", _hashingService.GetConsistentHash("Hi"));
                 newNode.Publish(join);
 
-                var terminate = new Terminate(newNode.Identity.RoutingHash);
+                var terminate = new TerminateNode(newNode.Identity.RoutingHash);
                 newNode.Publish(terminate);
             }
         }

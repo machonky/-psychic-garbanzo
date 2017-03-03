@@ -13,17 +13,23 @@ namespace CoreDht
         protected DisposableStack Janitor { get; }
         protected NetMQActor Actor { get; }
 
+        private IMessageSerializer Serializer { get; }
+
         private PairSocket Shim;
         private NetMQPoller Poller;
-        private RoutableMessageMarshaller _marshaller;
+        private RoutableMessageMarshaller Marshaller;
+        private FingerTable FingerTable;
 
         protected Node(NodeInfo identity, IMessageSerializer serializer)
         {
+            Serializer = serializer;
+            Marshaller = new RoutableMessageMarshaller(Serializer);
             MessageBus = new MemoryBus();
             MessageBus.Subscribe(new NodeHandler(this));
             Identity = identity;
+            FingerTable = new FingerTable(Identity);
             Janitor = new DisposableStack();
-            Actor = Janitor.Push(CreateActor(serializer));
+            Actor = Janitor.Push(CreateActor());
         }
 
         public static string CreateIdentifier(string hostNameOrAddress, int port)
@@ -31,12 +37,11 @@ namespace CoreDht
             return $"chord://{hostNameOrAddress}:{port}";
         }
 
-        private NetMQActor CreateActor(IMessageSerializer serializer)
+        private NetMQActor CreateActor()
         {
             return NetMQActor.Create(shim =>
             {
                 Shim = Janitor.Push(shim);
-                _marshaller = new RoutableMessageMarshaller(serializer);
                 Shim.ReceiveReady += (sender, args) =>
                 {
                     var mqMsg = args.Socket.ReceiveMultipartMessage(3);
@@ -44,7 +49,7 @@ namespace CoreDht
                     {
                         ConsistentHash hash;
                         RoutableMessage msg;
-                        _marshaller.Unmarshall(mqMsg, out hash, out msg);
+                        Marshaller.Unmarshall(mqMsg, out hash, out msg);
                         if (msg != null && IsInDomain(hash))
                         {
                             MessageBus.Publish(msg);
@@ -66,7 +71,7 @@ namespace CoreDht
         class NodeHandler : 
             IHandle<JoinNetwork>, 
             IHandle<JoinNetworkReply>,
-            IHandle<Terminate>
+            IHandle<TerminateNode>
         {
             private readonly Node Node;
 
@@ -86,7 +91,7 @@ namespace CoreDht
                 // Connect to the network based on the reply information
             }
 
-            public void Handle(Terminate message)
+            public void Handle(TerminateNode message)
             {
                 if (Node.Identity.RoutingHash.Equals(message.RoutingTarget))
                 {
@@ -99,8 +104,13 @@ namespace CoreDht
 
         public void Publish(RoutableMessage message)
         {
-            var mqMsg = _marshaller.Marshall(message);
+            var mqMsg = Marshaller.Marshall(message);
             Actor.SendMultipartMessage(mqMsg);
+        }
+
+        public bool TrySend(ref Msg msg, TimeSpan timeout, bool more)
+        {
+            return Actor.TrySend(ref msg, timeout, more);
         }
 
         #region IDisposable Support
@@ -117,10 +127,5 @@ namespace CoreDht
         }
 
         #endregion
-
-        public bool TrySend(ref Msg msg, TimeSpan timeout, bool more)
-        {
-            return Actor.TrySend(ref msg, timeout, more);
-        }
     }
 }

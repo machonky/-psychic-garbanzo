@@ -61,9 +61,12 @@
     <Compile Include="ConsistentHash.cs" />
     <Compile Include="ConsistentHashingService.cs" />
     <Compile Include="DisposableStack.cs" />
+    <Compile Include="DnsProvider.cs" />
+    <Compile Include="FingerTable.cs" />
     <Compile Include="FingerTableEntry.cs" />
     <Compile Include="ICloneable.cs" />
     <Compile Include="IConsistentHashingService.cs" />
+    <Compile Include="IDnsProvider.cs" />
     <Compile Include="IMessageSerializer.cs" />
     <Compile Include="INodeFactory.cs" />
     <Compile Include="IPublisher.cs" />
@@ -78,7 +81,7 @@
     <Compile Include="RoutableMessageMarshaller.cs" />
     <Compile Include="Sha1HashingService.cs" />
     <Compile Include="Sha256HashingService.cs" />
-    <Compile Include="Terminate.cs" />
+    <Compile Include="TerminateNOde.cs" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />

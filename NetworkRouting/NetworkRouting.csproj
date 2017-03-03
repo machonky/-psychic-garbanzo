@@ -63,7 +63,6 @@
   <ItemGroup>
     <Compile Include="ApplicationNode.cs" />
     <Compile Include="ApplicationNodeFactory.cs" />
-    <Compile Include="DnsProvider.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
