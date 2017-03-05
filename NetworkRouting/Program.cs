@@ -11,17 +11,13 @@ namespace NetworkRouting
         void Run(string[] args)
         {
             var hostEntry = _dnsProvider.GetHostEntry("localhost");
-            var id0 = Node.CreateIdentifier(hostEntry.HostName, 9000, 0);
-            var id1 = Node.CreateIdentifier(hostEntry.HostName, 9001, 1);
+            var id0 = Node.CreateIdentifier(hostEntry.HostName, 9000);
+            var id1 = Node.CreateIdentifier(hostEntry.HostName, 9001);
 
             using (var node0 = _nodeFactory.CreateNode(id0, $"{hostEntry.HostName}:9000"))
             using (var node1 = _nodeFactory.CreateNode(id1, $"{hostEntry.HostName}:9001"))
             {
-                // Node1 wants to join node0 network
-                var msg = node1.EmitJoinNetwork(hostEntry.HostName, 9001);
-                node0.Publish(msg);
-//                var msg = new FindSuccessor(node1.Identity.RoutingHash, Guid.NewGuid(), node0.Identity.RoutingHash);
-//                node0.Publish(msg);
+                Console.ReadKey();
 
                 var terminate = new TerminateNode(node0.Identity.RoutingHash);
                 node0.Publish(terminate);

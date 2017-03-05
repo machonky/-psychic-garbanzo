@@ -1,4 +1,6 @@
-﻿using CoreDht;
+﻿using System;
+using CoreDht;
+using CoreMemoryBus;
 using Routing;
 
 namespace NetworkRouting
@@ -11,13 +13,18 @@ namespace NetworkRouting
             MessageBus.Subscribe(new ApplicationHandler(this));
         }
 
-        class ApplicationHandler
+        class ApplicationHandler : IHandle<NodeInitialised>
         {
             private readonly ApplicationNode _host;
 
             public ApplicationHandler(ApplicationNode host)
             {
                 _host = host;
+            }
+
+            public void Handle(NodeInitialised message)
+            {
+                Console.WriteLine($"{_host.Identity.Identifier} initialised");
             }
         }
     }

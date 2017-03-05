@@ -23,6 +23,8 @@ namespace CoreDht
         private IConsistentHashingService HashingService { get; }
         private SocketCache ForwardingSockets { get; }
         private DealerSocket ListeningSocket { get; }
+        public NetMQTimer InitTimer { get; set; }
+
 
         protected Node(NodeInfo identity, IMessageSerializer serializer, INodeSocketFactory socketFactory, IConsistentHashingService hashingService)
         {
@@ -37,10 +39,28 @@ namespace CoreDht
             Janitor = new DisposableStack();
             ForwardingSockets = Janitor.Push(new SocketCache(SocketFactory));
             Poller = Janitor.Push(new NetMQPoller());
+            InitTimer = CreateInitTimer();
             ListeningSocket = Janitor.Push(SocketFactory.CreateBindingSocket(Identity.HostAndPort));
             InitListeningSocket();
             Actor = Janitor.Push(CreateActor());
+            InitTimer.Elapsed += (sender, args) =>
+            {
+                Publish(new NodeReady(Identity.RoutingHash));
+            };
             FingerTable = new FingerTable(Identity, Actor);
+        }
+
+        private NetMQTimer CreateInitTimer()
+        {
+            var rnd = new Random(Guid.NewGuid().GetHashCode());
+            var randomStart = TimeSpan.FromMilliseconds(rnd.Next(500, 1000));
+            var result = new NetMQTimer(randomStart);
+            result.Elapsed += (sender, args) =>
+            {
+                args.Timer.Enable = false; // one shot only
+            };
+
+            return result;
         }
 
         private void InitNodeHandlers()
@@ -61,6 +81,11 @@ namespace CoreDht
         {
             var vNodeId = vNodeIndex >= 0 ? $"/{vNodeIndex}" : string.Empty;
             var hostAndPort = CreateHostAndPort(hostNameOrAddress, port);
+            return $"chord://{hostAndPort}{vNodeId}";
+        }
+        public static string CreateIdentifier(string hostAndPort, int vNodeIndex = -1)
+        {
+            var vNodeId = vNodeIndex >= 0 ? $"/{vNodeIndex}" : string.Empty;
             return $"chord://{hostAndPort}{vNodeId}";
         }
         public static string CreateHostAndPort(string hostNameOrAddress, int port)
@@ -88,6 +113,7 @@ namespace CoreDht
                     }
                 };
 
+                Poller.Add(InitTimer);
                 Poller.Add(Shim);
                 Shim.SignalOK();
                 Poller.Run();
@@ -139,15 +165,15 @@ namespace CoreDht
         }
 
         // To be made private
-        public JoinNetwork EmitJoinNetwork(string hostNameOrAddress, int port, int vNodeIndex = -1)
+
+        // temporary
+        public JoinNetwork EmitJoinNetwork()
         {
-            string identifier = CreateIdentifier(hostNameOrAddress, port, vNodeIndex);
-            string hostAndPort = CreateHostAndPort(hostNameOrAddress, port);
-            var routingHash = HashingService.GetConsistentHash(identifier); 
-            var msg = new JoinNetwork(new NodeInfo(identifier, routingHash, hostAndPort), HashingService.GetConsistentHash(identifier),Guid.NewGuid());
+            string identifier = CreateIdentifier(Identity.HostAndPort);
+            var routingHash = HashingService.GetConsistentHash(identifier);
+            var msg = new JoinNetwork(new NodeInfo(identifier, routingHash, Identity.HostAndPort), routingHash, Guid.NewGuid());
             return msg;
         }
-
 
         #region IDisposable Support
 
@@ -163,5 +189,14 @@ namespace CoreDht
         }
 
         #endregion
+
+        //temporary
+        private void Go()
+        {
+            var msg = EmitJoinNetwork();
+            MessageBus.Publish(new AwaitingJoin(msg.CorrelationId));
+            var forwardingSocket = ForwardingSockets[CreateHostAndPort("Touchy", 9000)];
+            Marshaller.Send(msg, forwardingSocket);
+        }
     }
 }

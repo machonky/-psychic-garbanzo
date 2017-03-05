@@ -58,6 +58,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AwaitingJoin.cs" />
     <Compile Include="CancelOperation.cs" />
     <Compile Include="ConsistentHash.cs" />
     <Compile Include="ConsistentHashingService.cs" />
@@ -68,6 +69,8 @@
     <Compile Include="FindSuccessor.cs" />
     <Compile Include="FingerTable.cs" />
     <Compile Include="FingerTableEntry.cs" />
+    <Compile Include="NodeInitialised.cs" />
+    <Compile Include="NodeReady.cs" />
     <Compile Include="ObjectCache.cs" />
     <Compile Include="IChainedCorrelationMessage.cs" />
     <Compile Include="ICloneable.cs" />
