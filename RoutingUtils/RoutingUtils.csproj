@@ -58,30 +58,48 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CancelOperation.cs" />
     <Compile Include="ConsistentHash.cs" />
     <Compile Include="ConsistentHashingService.cs" />
+    <Compile Include="CorrelatableRepository.cs" />
+    <Compile Include="DealerSocketWrapper.cs" />
     <Compile Include="DisposableStack.cs" />
     <Compile Include="DnsProvider.cs" />
+    <Compile Include="FindSuccessor.cs" />
     <Compile Include="FingerTable.cs" />
     <Compile Include="FingerTableEntry.cs" />
+    <Compile Include="ObjectCache.cs" />
+    <Compile Include="IChainedCorrelationMessage.cs" />
     <Compile Include="ICloneable.cs" />
     <Compile Include="IConsistentHashingService.cs" />
+    <Compile Include="ICorrelatableItem.cs" />
+    <Compile Include="ICorrelatedMessage.cs" />
     <Compile Include="IDnsProvider.cs" />
     <Compile Include="IMessageSerializer.cs" />
     <Compile Include="INodeFactory.cs" />
+    <Compile Include="INodeSocketFactory.cs" />
+    <Compile Include="InProcNodeSocketFactory.cs" />
     <Compile Include="IPublisher.cs" />
+    <Compile Include="IRepositoryItem.cs" />
     <Compile Include="IRoutableMessage.cs" />
     <Compile Include="JoinNetwork.cs" />
     <Compile Include="Md5HashingService.cs" />
     <Compile Include="MessageSerializer.cs" />
     <Compile Include="Node.cs" />
+    <Compile Include="Node.NodeHandler.cs" />
     <Compile Include="NodeInfo.cs" />
+    <Compile Include="OperationComplete.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repository.cs" />
+    <Compile Include="RepositoryItem.cs" />
     <Compile Include="RoutableMessage.cs" />
     <Compile Include="RoutableMessageMarshaller.cs" />
+    <Compile Include="RoutableRepository.cs" />
     <Compile Include="Sha1HashingService.cs" />
     <Compile Include="Sha256HashingService.cs" />
-    <Compile Include="TerminateNOde.cs" />
+    <Compile Include="SocketCache.cs" />
+    <Compile Include="TcpNodeSocketFactory.cs" />
+    <Compile Include="TerminateNode.cs" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />

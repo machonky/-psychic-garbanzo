@@ -1,15 +1,17 @@
 using System;
+using CoreMemoryBus.Messages;
 
 namespace CoreDht
 {
-    public class JoinNetwork : RoutableMessage, ICorrelatedMessage<Guid>
+    public class FindSuccessor : RoutableMessage, ICorrelatedMessage<Guid>
     {
-        public NodeInfo HostIdentity { get; }
+        public ConsistentHash ToNode { get; }
+
         public Guid CorrelationId { get; }
 
-        public JoinNetwork(NodeInfo hostIdentity, ConsistentHash routingTarget, Guid correlationId) : base(routingTarget)
+        public FindSuccessor(ConsistentHash toNode, Guid correlationId, ConsistentHash routingTarget) : base(routingTarget)
         {
-            HostIdentity = hostIdentity;
+            ToNode = toNode;
             CorrelationId = correlationId;
         }
 
@@ -18,7 +20,7 @@ namespace CoreDht
             public NodeInfo Successor { get; }
             public Guid CorrelationId { get; }
 
-            public Reply(NodeInfo successor, ConsistentHash routingTarget, Guid correlationId) : base(routingTarget)
+            public Reply(NodeInfo successor, Guid correlationId, ConsistentHash routingTarget) : base(routingTarget)
             {
                 Successor = successor;
                 CorrelationId = correlationId;

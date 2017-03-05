@@ -28,6 +28,12 @@ namespace CoreDht
             return result;
         }
 
+        public void Send(RoutableMessage msg, IOutgoingSocket outgoingSocket)
+        {
+            var mqMsg = Marshall(msg);
+            outgoingSocket.SendMultipartMessage(mqMsg);
+        }
+
         public void Unmarshall(NetMQMessage netMqMessage, out ConsistentHash routingHash, out RoutableMessage msg)
         {
             routingHash = new ConsistentHash(hashBytes: netMqMessage[0].ToByteArray());

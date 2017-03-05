@@ -1,14 +1,17 @@
+using NetMQ;
+
 namespace CoreDht
 {
     public class FingerTableEntry
     {
-        public FingerTableEntry(ConsistentHash startValue, ConsistentHash successorId)
+        public FingerTableEntry(ConsistentHash startValue, NodeInfo successorIdentity)
         {
             StartValue = startValue;
-            SuccessorId = successorId;
+            SuccessorIdentity = successorIdentity;
         }
 
         public ConsistentHash StartValue { get; private set; }
-        public ConsistentHash SuccessorId { get; private set; }
+        public NodeInfo SuccessorIdentity { get; private set; }
+
     }
 }

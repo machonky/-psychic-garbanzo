@@ -1,13 +1,13 @@
 ﻿using System;
-using CoreMemoryBus;
 using CoreMemoryBus.Messaging;
 using NetMQ;
 using NetMQ.Sockets;
 using NetworkRouting;
+using Routing;
 
 namespace CoreDht
 {
-    public class Node : IPublisher<RoutableMessage>, IDisposable, IOutgoingSocket
+    public partial class Node : IPublisher<RoutableMessage>, IDisposable, IOutgoingSocket
     {
         protected MemoryBus MessageBus { get; }
         protected DisposableStack Janitor { get; }
@@ -16,25 +16,56 @@ namespace CoreDht
         private IMessageSerializer Serializer { get; }
 
         private PairSocket Shim;
-        private NetMQPoller Poller;
-        private RoutableMessageMarshaller Marshaller;
-        private FingerTable FingerTable;
+        private NetMQPoller Poller { get; }
+        private RoutableMessageMarshaller Marshaller { get; }
+        private FingerTable FingerTable { get; }
+        private INodeSocketFactory SocketFactory { get; }
+        private IConsistentHashingService HashingService { get; }
+        private SocketCache ForwardingSockets { get; }
+        private DealerSocket ListeningSocket { get; }
 
-        protected Node(NodeInfo identity, IMessageSerializer serializer)
+        protected Node(NodeInfo identity, IMessageSerializer serializer, INodeSocketFactory socketFactory, IConsistentHashingService hashingService)
         {
             Serializer = serializer;
             Marshaller = new RoutableMessageMarshaller(Serializer);
             MessageBus = new MemoryBus();
-            MessageBus.Subscribe(new NodeHandler(this));
+            InitNodeHandlers();
             Identity = identity;
-            FingerTable = new FingerTable(Identity);
+            Successor = identity;
+            SocketFactory = socketFactory;
+            HashingService = hashingService;
             Janitor = new DisposableStack();
+            ForwardingSockets = Janitor.Push(new SocketCache(SocketFactory));
+            Poller = Janitor.Push(new NetMQPoller());
+            ListeningSocket = Janitor.Push(SocketFactory.CreateBindingSocket(Identity.HostAndPort));
+            InitListeningSocket();
             Actor = Janitor.Push(CreateActor());
+            FingerTable = new FingerTable(Identity, Actor);
         }
 
-        public static string CreateIdentifier(string hostNameOrAddress, int port)
+        private void InitNodeHandlers()
         {
-            return $"chord://{hostNameOrAddress}:{port}";
+            MessageBus.Subscribe(new NodeHandler(this));
+        }
+
+        private void InitListeningSocket()
+        {
+            ListeningSocket.ReceiveReady += (sender, args) =>
+            {
+                Actor.SendMultipartMessage(args.Socket.ReceiveMultipartMessage());
+            };
+            Poller.Add(ListeningSocket);
+        }
+
+        public static string CreateIdentifier(string hostNameOrAddress, int port, int vNodeIndex = -1)
+        {
+            var vNodeId = vNodeIndex >= 0 ? $"/{vNodeIndex}" : string.Empty;
+            var hostAndPort = CreateHostAndPort(hostNameOrAddress, port);
+            return $"chord://{hostAndPort}{vNodeId}";
+        }
+        public static string CreateHostAndPort(string hostNameOrAddress, int port)
+        {
+            return $"{hostNameOrAddress}:{port}";
         }
 
         private NetMQActor CreateActor()
@@ -57,7 +88,7 @@ namespace CoreDht
                     }
                 };
 
-                Poller = Janitor.Push(new NetMQPoller { Shim });
+                Poller.Add(Shim);
                 Shim.SignalOK();
                 Poller.Run();
             });
@@ -65,53 +96,58 @@ namespace CoreDht
 
         private bool IsInDomain(ConsistentHash hash)
         {
-            return true;
+            return IsIDInDomain(hash, Identity.RoutingHash, Successor.RoutingHash);
         }
 
-        class NodeHandler : 
-            IHandle<JoinNetwork>, 
-            IHandle<JoinNetworkReply>,
-            IHandle<TerminateNode>
+        public static bool IsIDInDomain(ConsistentHash id, ConsistentHash start, ConsistentHash end)
         {
-            private readonly Node Node;
-
-            public NodeHandler(Node node)
+            if (start < end)
             {
-                Node = node;
-            }
-
-            public void Handle(JoinNetwork message)
-            {
-                // Another node wishes to join our network.
-                // We need to find it's successor so it can make a connection, and insert itself into the network ring
-            }
-
-            public void Handle(JoinNetworkReply message)
-            {
-                // Connect to the network based on the reply information
-            }
-
-            public void Handle(TerminateNode message)
-            {
-                if (Node.Identity.RoutingHash.Equals(message.RoutingTarget))
+                if (id > start && id <= end)
                 {
-                    Node.Poller.Stop();
+                    return true;
                 }
             }
+            else //wraparound
+            {
+                if (id > start || id <= end)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public NodeInfo Identity { get; }
 
+        private NodeInfo Successor { get; set; }
+
         public void Publish(RoutableMessage message)
         {
-            var mqMsg = Marshaller.Marshall(message);
-            Actor.SendMultipartMessage(mqMsg);
+            Marshaller.Send(message, Actor);
         }
 
         public bool TrySend(ref Msg msg, TimeSpan timeout, bool more)
         {
             return Actor.TrySend(ref msg, timeout, more);
         }
+
+        private NodeInfo FindClosestPrecedingFinger(ConsistentHash toNode)
+        {
+            return FingerTable.FindClosestPrecedingFinger(toNode);
+        }
+
+        // To be made private
+        public JoinNetwork EmitJoinNetwork(string hostNameOrAddress, int port, int vNodeIndex = -1)
+        {
+            string identifier = CreateIdentifier(hostNameOrAddress, port, vNodeIndex);
+            string hostAndPort = CreateHostAndPort(hostNameOrAddress, port);
+            var routingHash = HashingService.GetConsistentHash(identifier); 
+            var msg = new JoinNetwork(new NodeInfo(identifier, routingHash, hostAndPort), HashingService.GetConsistentHash(identifier),Guid.NewGuid());
+            return msg;
+        }
+
 
         #region IDisposable Support
 

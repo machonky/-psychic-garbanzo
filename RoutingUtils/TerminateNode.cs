@@ -1,3 +1,5 @@
+using CoreMemoryBus.Messages;
+
 namespace CoreDht
 {
     public class TerminateNode : RoutableMessage
