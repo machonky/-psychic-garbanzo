@@ -95,6 +95,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository.cs" />
     <Compile Include="RepositoryItem.cs" />
+    <Compile Include="RequestResponseHandler.cs" />
     <Compile Include="RoutableMessage.cs" />
     <Compile Include="RoutableMessageMarshaller.cs" />
     <Compile Include="RoutableRepository.cs" />

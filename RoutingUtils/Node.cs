@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Runtime.Remoting.Messaging;
+using CoreMemoryBus.Messages;
 using CoreMemoryBus.Messaging;
 using NetMQ;
 using NetMQ.Sockets;
@@ -30,18 +33,19 @@ namespace CoreDht
         {
             Serializer = serializer;
             Marshaller = new RoutableMessageMarshaller(Serializer);
-            MessageBus = new MemoryBus();
-            InitNodeHandlers();
+            MessageBus = new MemoryBus(null, x => new temp.HeirarchicalPublishingStrategy(x));
+            MessageBus.Subscribe(new NodeHandler(this));
             Identity = identity;
             Successor = identity;
             SocketFactory = socketFactory;
             HashingService = hashingService;
             Janitor = new DisposableStack();
-            ForwardingSockets = Janitor.Push(new SocketCache(SocketFactory));
+
             Poller = Janitor.Push(new NetMQPoller());
             InitTimer = CreateInitTimer();
             ListeningSocket = Janitor.Push(SocketFactory.CreateBindingSocket(Identity.HostAndPort));
             InitListeningSocket();
+            ForwardingSockets = Janitor.Push(new SocketCache(SocketFactory));
             Actor = Janitor.Push(CreateActor());
             InitTimer.Elapsed += (sender, args) =>
             {
@@ -63,18 +67,12 @@ namespace CoreDht
             return result;
         }
 
-        private void InitNodeHandlers()
-        {
-            MessageBus.Subscribe(new NodeHandler(this));
-        }
-
         private void InitListeningSocket()
         {
             ListeningSocket.ReceiveReady += (sender, args) =>
             {
                 Actor.SendMultipartMessage(args.Socket.ReceiveMultipartMessage());
             };
-            Poller.Add(ListeningSocket);
         }
 
         public static string CreateIdentifier(string hostNameOrAddress, int port, int vNodeIndex = -1)
@@ -83,11 +81,13 @@ namespace CoreDht
             var hostAndPort = CreateHostAndPort(hostNameOrAddress, port);
             return $"chord://{hostAndPort}{vNodeId}";
         }
+
         public static string CreateIdentifier(string hostAndPort, int vNodeIndex = -1)
         {
             var vNodeId = vNodeIndex >= 0 ? $"/{vNodeIndex}" : string.Empty;
             return $"chord://{hostAndPort}{vNodeId}";
         }
+
         public static string CreateHostAndPort(string hostNameOrAddress, int port)
         {
             return $"{hostNameOrAddress}:{port}";
@@ -97,27 +97,30 @@ namespace CoreDht
         {
             return NetMQActor.Create(shim =>
             {
-                Shim = Janitor.Push(shim);
-                Shim.ReceiveReady += (sender, args) =>
-                {
-                    var mqMsg = args.Socket.ReceiveMultipartMessage(3);
-                    if (mqMsg[0].ConvertToString() != NetMQActor.EndShimMessage)
-                    {
-                        ConsistentHash hash;
-                        RoutableMessage msg;
-                        Marshaller.Unmarshall(mqMsg, out hash, out msg);
-                        if (msg != null && IsInDomain(hash))
-                        {
-                            MessageBus.Publish(msg);
-                        }
-                    }
-                };
+                Shim = shim;
+                Shim.ReceiveReady += ShimOnReceiveReady;
 
+                Poller.Add(ListeningSocket);
                 Poller.Add(InitTimer);
                 Poller.Add(Shim);
                 Shim.SignalOK();
                 Poller.Run();
             });
+        }
+
+        private void ShimOnReceiveReady(object sender, NetMQSocketEventArgs args)
+        {
+            var mqMsg = args.Socket.ReceiveMultipartMessage();
+            if (mqMsg[0].ConvertToString() != NetMQActor.EndShimMessage)
+            {
+                ConsistentHash hash;
+                RoutableMessage msg;
+                Marshaller.Unmarshall(mqMsg, out hash, out msg);
+                if (msg != null && IsInDomain(hash))
+                {
+                    MessageBus.Publish(msg);
+                }
+            }
         }
 
         private bool IsInDomain(ConsistentHash hash)
@@ -169,10 +172,7 @@ namespace CoreDht
         // temporary
         public JoinNetwork EmitJoinNetwork()
         {
-            string identifier = CreateIdentifier(Identity.HostAndPort);
-            var routingHash = HashingService.GetConsistentHash(identifier);
-            var msg = new JoinNetwork(new NodeInfo(identifier, routingHash, Identity.HostAndPort), routingHash, Guid.NewGuid());
-            return msg;
+            return new JoinNetwork(Identity, Identity.RoutingHash, Guid.NewGuid());
         }
 
         #region IDisposable Support
@@ -185,6 +185,7 @@ namespace CoreDht
             if (!isDisposed)
             {
                 Janitor.Dispose();
+                isDisposed = true;
             }
         }
 
@@ -195,8 +196,60 @@ namespace CoreDht
         {
             var msg = EmitJoinNetwork();
             MessageBus.Publish(new AwaitingJoin(msg.CorrelationId));
+
             var forwardingSocket = ForwardingSockets[CreateHostAndPort("Touchy", 9000)];
             Marshaller.Send(msg, forwardingSocket);
+        }
+
+        public override string ToString()
+        {
+            return Identity.ToString();
+        }
+    }
+
+    namespace temp
+    {
+        // To be fixed in CoreMemoryBus
+        public class HeirarchicalPublishingStrategy : PublishingStrategy, IPublishingStrategy
+        {
+            public HeirarchicalPublishingStrategy(MessageHandlerDictionary messageHandlers)
+              : base(messageHandlers)
+            {
+            }
+
+            public void Publish(Message message)
+            {
+                Type msgType = message.GetType();
+                this.PublishToProxies(message, msgType);
+                do
+                {
+                    msgType = msgType.BaseType;
+                    this.PublishToProxies(message, msgType);
+                }
+                while (msgType != typeof(Message));
+            }
+        }
+
+        public class PublishingStrategy
+        {
+            protected MessageHandlerDictionary MessageHandlers { get; private set; }
+
+            protected PublishingStrategy(MessageHandlerDictionary messageHandlers)
+            {
+                this.MessageHandlers = messageHandlers;
+            }
+
+            protected void PublishToProxies(Message message, Type msgType)
+            {
+                MessageHandlerProxies messageHandlerProxies;
+                if (!this.MessageHandlers.TryGetValue(msgType, out messageHandlerProxies))
+                {
+                    return;
+                }
+
+                var proxyCopy = new List<IMessageHandlerProxy>(messageHandlerProxies);
+                proxyCopy.ForEach(x => x.Publish(message));
+            }
         }
     }
 }

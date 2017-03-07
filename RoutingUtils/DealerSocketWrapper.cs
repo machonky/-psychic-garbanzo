@@ -24,10 +24,10 @@ namespace CoreDht
             {
                 return Socket.TrySend(ref msg, timeout, more);
             }
-            catch (Exception e)
+            catch (Exception e) // Change this to specific type
             {
                 Error = true;
-                throw;
+                throw e;
             }
         }
 

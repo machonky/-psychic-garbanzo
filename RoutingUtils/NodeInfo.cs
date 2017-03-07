@@ -32,5 +32,10 @@ namespace CoreDht
         {
             return new NodeInfo(this);
         }
+
+        public override string ToString()
+        {
+            return Identifier;
+        }
     }
 }

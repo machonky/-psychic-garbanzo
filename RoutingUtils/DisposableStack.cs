@@ -23,7 +23,8 @@ namespace CoreDht
             {
                 while (_disposables.Count > 0)
                 {
-                    _disposables.Pop().Dispose();
+                    var disposable = _disposables.Pop();
+                    disposable.Dispose();
                 }
                 isDisposed = true;
             }

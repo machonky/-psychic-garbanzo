@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using CoreDht;
 using Routing;
 using RoutingUtils;
@@ -11,8 +12,8 @@ namespace NetworkRouting
         void Run(string[] args)
         {
             var hostEntry = _dnsProvider.GetHostEntry("localhost");
-            var id0 = Node.CreateIdentifier(hostEntry.HostName, 9000);
-            var id1 = Node.CreateIdentifier(hostEntry.HostName, 9001);
+            var id0 = Node.CreateIdentifier($"{hostEntry.HostName}:9000");
+            var id1 = Node.CreateIdentifier($"{hostEntry.HostName}:9001");
 
             using (var node0 = _nodeFactory.CreateNode(id0, $"{hostEntry.HostName}:9000"))
             using (var node1 = _nodeFactory.CreateNode(id1, $"{hostEntry.HostName}:9001"))
@@ -24,6 +25,8 @@ namespace NetworkRouting
 
                 terminate = new TerminateNode(node1.Identity.RoutingHash);
                 node1.Publish(terminate);
+
+                Thread.Sleep(100);
             }
         }
 
