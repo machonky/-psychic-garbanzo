@@ -1,15 +1,12 @@
-﻿using Routing;
+﻿using System;
 
 namespace CoreDht
 {
-    public class NodeInfo : ICloneable<NodeInfo>
+    public class NodeInfo : IComparable<NodeInfo>
     {
-        public string Identifier { get; set; }
-        public ConsistentHash RoutingHash { get; set; }
-        public string HostAndPort { get; set; }
-
-        public NodeInfo()
-        {}
+        public string Identifier { get; }
+        public ConsistentHash RoutingHash { get; }
+        public string HostAndPort { get; }
 
         public NodeInfo(string identifier, ConsistentHash routingHash, string hostAndPort)
         {
@@ -23,19 +20,39 @@ namespace CoreDht
             if (lhs != null)
             {
                 Identifier = lhs.Identifier;
-                RoutingHash = lhs.RoutingHash.Clone();
+                RoutingHash = lhs.RoutingHash;
                 HostAndPort = lhs.HostAndPort;
             }
-        }
-
-        public NodeInfo Clone()
-        {
-            return new NodeInfo(this);
         }
 
         public override string ToString()
         {
             return Identifier;
+        }
+
+        public override int GetHashCode()
+        {
+            return Identifier.GetHashCode()^RoutingHash.GetHashCode()^HostAndPort.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            var rhs = obj as NodeInfo;
+            if (rhs != null)
+            {
+                return
+                    Identifier.Equals(rhs.Identifier) &&
+                    RoutingHash.Equals(rhs.RoutingHash) &&
+                    HostAndPort.Equals(rhs.HostAndPort);
+            }
+            return false;
+        }
+
+        public int CompareTo(NodeInfo other)
+        {
+            return 
+                RoutingHash < other.RoutingHash?-1:
+                RoutingHash.Equals(other.RoutingHash)?0:1;
         }
     }
 }

@@ -6,15 +6,15 @@ namespace CoreDht
     /// <summary>
     /// FindSuccessor is transmitted to identify a successor to a node or reconstruct a routing table.
     /// </summary>
-    public class FindSuccessor : NodeMessage, ICorrelatedMessage<Guid>
+    public class FindSuccessorToHash : NodeMessage, ICorrelatedMessage<Guid>
     {
-        public NodeInfo ToNode { get; }
+        public ConsistentHash ToHash { get; }
 
         public Guid CorrelationId { get; }
 
-        public FindSuccessor(NodeInfo recipient, NodeInfo toNode, Guid correlationId) : base(recipient)
+        public FindSuccessorToHash(NodeInfo recipient, ConsistentHash toHash, Guid correlationId) : base(recipient)
         {
-            ToNode = toNode;
+            ToHash = toHash;
             CorrelationId = correlationId;
         }
 
@@ -38,13 +38,11 @@ namespace CoreDht
         {
             public Guid CorrelationId { get; }
             public NodeInfo Successor { get; }
-            public NodeInfo[] SuccessorList { get; }
 
-            public Reply(NodeInfo sender, NodeInfo successor, Guid correlationId, NodeInfo[] successorList) : base(sender)
+            public Reply(NodeInfo sender, NodeInfo successor, Guid correlationId) : base(sender)
             {
                 Successor = successor;
                 CorrelationId = correlationId;
-                SuccessorList = successorList;
             }
         }
     }

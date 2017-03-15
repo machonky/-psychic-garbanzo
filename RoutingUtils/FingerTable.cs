@@ -1,41 +1,44 @@
-using NetMQ;
+using System;
+using System.Linq;
 
 namespace CoreDht
 {
-    public class FingerTable
+    public class FingerTable : RoutingTable
     {
-        public NodeInfo Identity { get; set; }
+        public NodeInfo Identity { get; }
 
-        private readonly FingerTableEntry[] _fingerTableEntries;
-
-        public FingerTable(NodeInfo identity, IOutgoingSocket nodeSocket)
+        public FingerTable(NodeInfo identity, int tableLength) : base(tableLength)
         {
             Identity = identity;
             var routingHash = identity.RoutingHash;
-            var entryCount = routingHash.BitCount;
 
-            _fingerTableEntries = new FingerTableEntry[entryCount];
-            for (int i = 0; i < entryCount; ++i)
+            for (int i = 0; i < tableLength; ++i)
             {
-                var finger = routingHash + ConsistentHash.BitValue(i);
-                _fingerTableEntries[i] = new FingerTableEntry(finger, identity);
+                var finger = routingHash + routingHash.One() << i;
+                Entries[i] = new FingerTableEntry(finger, identity);
             }
         }
 
-        public FingerTableEntry this[int index]
+        public static FingerTableEntry[] CreateEntries(int entryCount, ConsistentHash nodeHash)
         {
-            get { return _fingerTableEntries[index]; }
-            set { _fingerTableEntries[index] = value; }
+            var entries = RoutingTable.CreateEntries(entryCount);
+            for (int i = 0; i < entryCount; ++i)
+            {
+                var finger = nodeHash + nodeHash.One() << i;
+                entries[i] = new FingerTableEntry(finger, null);
+            }
+
+            return entries;
         }
 
         public NodeInfo FindClosestPrecedingFinger(ConsistentHash toNode)
         {
             //Check finger tables
-            for (int i = _fingerTableEntries.Length - 1; i >= 0; --i)
+            for (int i = Entries.Length - 1; i >= 0; --i)
             {
-                if (Node.IsIDInDomain(_fingerTableEntries[i].SuccessorIdentity.RoutingHash, Identity.RoutingHash, toNode))
+                if (Node.IsIDInDomain(Entries[i].SuccessorIdentity.RoutingHash, Identity.RoutingHash, toNode))
                 {
-                    return _fingerTableEntries[i].SuccessorIdentity;
+                    return Entries[i].SuccessorIdentity;
                 }
             }
             // Check successors

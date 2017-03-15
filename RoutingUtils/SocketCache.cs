@@ -7,8 +7,8 @@ namespace CoreDht
 {
     public class SocketCache : ObjectCache<string, DealerSocketWrapper>, IDisposable
     {
-        public SocketCache(INodeSocketFactory socketFactory) : 
-            base(key => new DealerSocketWrapper(socketFactory.CreateForwardingSocket(key)))
+        public SocketCache(INodeSocketFactory socketFactory, IClock clock) : 
+            base(key => new DealerSocketWrapper(socketFactory.CreateForwardingSocket(key), clock))
         {}
 
         public override void Remove(string key)

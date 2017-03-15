@@ -34,8 +34,12 @@
       <HintPath>..\packages\AsyncIO.0.1.26.0\lib\net40\AsyncIO.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="CoreMemoryBus, Version=1.0.4.34, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CoreMemoryBus.1.0.4.34\lib\net45\CoreMemoryBus.dll</HintPath>
+    <Reference Include="CoreMemoryBus, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CoreMemoryBus.1.0.5.280\lib\net452\CoreMemoryBus.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="CoreMemoryBus.Messages, Version=1.0.5.280, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CoreMemoryBus.Messages.1.0.5.280\lib\net452\CoreMemoryBus.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="NetMQ, Version=4.0.0.1, Culture=neutral, PublicKeyToken=a6decef4ddc58b3a, processorArchitecture=MSIL">
@@ -58,8 +62,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AwaitingJoin.cs" />
     <Compile Include="CancelOperation.cs" />
+    <Compile Include="Clock.cs" />
     <Compile Include="ConsistentHash.cs" />
     <Compile Include="ConsistentHashingService.cs" />
     <Compile Include="CorrelatableRepository.cs" />
@@ -67,12 +71,25 @@
     <Compile Include="DisposableStack.cs" />
     <Compile Include="DnsProvider.cs" />
     <Compile Include="FindSuccessor.cs" />
+    <Compile Include="FindSuccessorToHash.cs" />
     <Compile Include="FingerTable.cs" />
+    <Compile Include="FingerTableEntryExtensions.cs" />
+    <Compile Include="GetFingerTable.cs" />
+    <Compile Include="GuidCorrelationFactory.cs" />
+    <Compile Include="ICorrelationFactory.cs" />
+    <Compile Include="Node.FindSuccessorToHashHandler.cs" />
+    <Compile Include="Node.GetFingerTableHandler.cs" />
+    <Compile Include="Node.StateHandler.cs" />
+    <Compile Include="NodeConfiguration.cs" />
+    <Compile Include="NodeMessage.cs" />
+    <Compile Include="Reference.cs" />
+    <Compile Include="RoutingTable.cs" />
+    <Compile Include="SuccessorTable.cs" />
     <Compile Include="FingerTableEntry.cs" />
+    <Compile Include="IClock.cs" />
     <Compile Include="NodeInitialised.cs" />
     <Compile Include="NodeReady.cs" />
     <Compile Include="ObjectCache.cs" />
-    <Compile Include="IChainedCorrelationMessage.cs" />
     <Compile Include="ICloneable.cs" />
     <Compile Include="IConsistentHashingService.cs" />
     <Compile Include="ICorrelatableItem.cs" />
@@ -97,7 +114,7 @@
     <Compile Include="RepositoryItem.cs" />
     <Compile Include="RequestResponseHandler.cs" />
     <Compile Include="RoutableMessage.cs" />
-    <Compile Include="RoutableMessageMarshaller.cs" />
+    <Compile Include="NodeMarshaller.cs" />
     <Compile Include="RoutableRepository.cs" />
     <Compile Include="Sha1HashingService.cs" />
     <Compile Include="Sha256HashingService.cs" />

@@ -5,6 +5,15 @@ using CoreMemoryBus.Util;
 
 namespace CoreDht
 {
+    /// <summary>
+    /// A Repository is a type of dictionary that creates an object corresponding to a key if it does not already exist. 
+    /// Objects in this repository must implement an IAmTriggeredBy interface to be instantiated.
+    /// <br>
+    /// This is particularly useful in messaging applications if the value type can respond to co-related messages (implements IPublisher). 
+    /// The correlation value is the Repository key type. A repository can instantiate a handler of the message stream on demand.
+    /// </summary>
+    /// <typeparam name="THashKey"></typeparam>
+    /// <typeparam name="TRepoItem"></typeparam>
     public class Repository<THashKey, TRepoItem>
     {
         protected readonly Dictionary<THashKey, TRepoItem> RepoItems = new Dictionary<THashKey, TRepoItem>();

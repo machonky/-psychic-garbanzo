@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Remoting.Messaging;
+using System.Threading;
 using CoreMemoryBus.Messages;
 using CoreMemoryBus.Messaging;
 using NetMQ;
@@ -20,44 +19,60 @@ namespace CoreDht
 
         private PairSocket Shim;
         private NetMQPoller Poller { get; }
-        private RoutableMessageMarshaller Marshaller { get; }
+        private NodeMarshaller Marshaller { get; }
         private FingerTable FingerTable { get; }
+        private SuccessorTable SuccessorTable { get; }
         private INodeSocketFactory SocketFactory { get; }
         private IConsistentHashingService HashingService { get; }
+        public IClock Clock { get; }
+        public ICorrelationFactory<Guid> CorrelationFactory { get; }
         private SocketCache ForwardingSockets { get; }
         private DealerSocket ListeningSocket { get; }
         public NetMQTimer InitTimer { get; set; }
 
 
-        protected Node(NodeInfo identity, IMessageSerializer serializer, INodeSocketFactory socketFactory, IConsistentHashingService hashingService)
+        protected Node(NodeInfo identity, NodeConfiguration config)
         {
-            Serializer = serializer;
-            Marshaller = new RoutableMessageMarshaller(Serializer);
-            MessageBus = new MemoryBus(null, x => new temp.HeirarchicalPublishingStrategy(x));
-            MessageBus.Subscribe(new NodeHandler(this));
+            Serializer = config.Serializer;
+            Marshaller = new NodeMarshaller(Serializer, config.HashingService);
+            MessageBus = new MemoryBus();
+            InitHandlers();
             Identity = identity;
             Successor = identity;
-            SocketFactory = socketFactory;
-            HashingService = hashingService;
+            Predecessor = null;
+            SocketFactory = config.NodeSocketFactory;
+            HashingService = config.HashingService;
+            CorrelationFactory = config.CorrelationFactory;
+            Clock = config.Clock;
             Janitor = new DisposableStack();
 
             Poller = Janitor.Push(new NetMQPoller());
             InitTimer = CreateInitTimer();
             ListeningSocket = Janitor.Push(SocketFactory.CreateBindingSocket(Identity.HostAndPort));
             InitListeningSocket();
-            ForwardingSockets = Janitor.Push(new SocketCache(SocketFactory));
+            ForwardingSockets = Janitor.Push(new SocketCache(SocketFactory, Clock));
             Actor = Janitor.Push(CreateActor());
             InitTimer.Elapsed += (sender, args) =>
             {
                 Publish(new NodeReady(Identity.RoutingHash));
             };
-            FingerTable = new FingerTable(Identity, Actor);
+            FingerTable = new FingerTable(Identity, Identity.RoutingHash.BitCount);
+            SuccessorTable = new SuccessorTable(Identity, config.SuccessorTableLength);
+        }
+
+        private void InitHandlers()
+        {
+            MessageBus.Subscribe(new NodeHandler(this));
+            MessageBus.Subscribe(new JoinNetworkHandler(this));
+            MessageBus.Subscribe(new GetFingerTableHandler(this));
+            MessageBus.Subscribe(new FindSuccessorToHashHandler(this));
         }
 
         private NetMQTimer CreateInitTimer()
         {
-            var rnd = new Random(Guid.NewGuid().GetHashCode());
-            var randomStart = TimeSpan.FromMilliseconds(rnd.Next(500, 1000));
+            var guid = CorrelationFactory.GetNextCorrelation();
+            var rnd = new Random(guid.GetHashCode());
+            var randomStart = TimeSpan.FromMilliseconds(rnd.Next(500, 1000)); // Prevent self similar behaviour
             var result = new NetMQTimer(randomStart);
             result.Elapsed += (sender, args) =>
             {
@@ -103,6 +118,7 @@ namespace CoreDht
                 Poller.Add(ListeningSocket);
                 Poller.Add(InitTimer);
                 Poller.Add(Shim);
+
                 Shim.SignalOK();
                 Poller.Run();
             });
@@ -113,12 +129,50 @@ namespace CoreDht
             var mqMsg = args.Socket.ReceiveMultipartMessage();
             if (mqMsg[0].ConvertToString() != NetMQActor.EndShimMessage)
             {
-                ConsistentHash hash;
-                RoutableMessage msg;
-                Marshaller.Unmarshall(mqMsg, out hash, out msg);
-                if (msg != null && IsInDomain(hash))
+                var typeCode = mqMsg[0].ConvertToString();
+                switch (typeCode)
+                {
+                    case NodeMarshaller.RoutableMessage:
+                        UnmarshalRoutableMsg(mqMsg);
+                        break;
+                    case NodeMarshaller.NodeMessage:
+                        UnMarshallNode(mqMsg);
+                        break;
+                    case NodeMarshaller.NodeReply:
+                        UnMarshallReply(mqMsg);
+                        break;
+                }
+            }
+            Thread.Sleep(0);
+        }
+
+        private void UnMarshallReply(NetMQMessage mqMsg)
+        {
+            NodeReply msg;
+            Marshaller.Unmarshall(mqMsg, out msg);
+            MessageBus.Publish(msg);
+        }
+        private void UnMarshallNode(NetMQMessage mqMsg)
+        {
+            NodeMessage msg;
+            Marshaller.Unmarshall(mqMsg, out msg);
+            MessageBus.Publish(msg);
+        }
+
+        private void UnmarshalRoutableMsg(NetMQMessage mqMsg)
+        {
+            ConsistentHash hash;
+            RoutableMessage msg;
+            Marshaller.Unmarshall(mqMsg, out hash, out msg);
+            if (msg != null && IsInDomain(hash))
+            {
+                if (IsInDomain(hash))
                 {
                     MessageBus.Publish(msg);
+                }
+                else
+                {
+                    // Find a forwarding socket & send it
                 }
             }
         }
@@ -152,6 +206,8 @@ namespace CoreDht
 
         private NodeInfo Successor { get; set; }
 
+        private NodeInfo Predecessor { get; set; }
+
         public void Publish(RoutableMessage message)
         {
             Marshaller.Send(message, Actor);
@@ -172,7 +228,7 @@ namespace CoreDht
         // temporary
         public JoinNetwork EmitJoinNetwork()
         {
-            return new JoinNetwork(Identity, Identity.RoutingHash, Guid.NewGuid());
+            return new JoinNetwork(Identity, CorrelationFactory.GetNextCorrelation());
         }
 
         #region IDisposable Support
@@ -194,8 +250,10 @@ namespace CoreDht
         //temporary
         private void Go()
         {
-            var msg = EmitJoinNetwork();
-            MessageBus.Publish(new AwaitingJoin(msg.CorrelationId));
+            //var msg = EmitJoinNetwork();
+            //MessageBus.Publish(new JoinNetwork.Await(msg.CorrelationId));
+            var msg = new GetFingerTable(Identity,Identity, CorrelationFactory.GetNextCorrelation());
+            MessageBus.Publish(new GetFingerTable.Await(msg.CorrelationId));
 
             var forwardingSocket = ForwardingSockets[CreateHostAndPort("Touchy", 9000)];
             Marshaller.Send(msg, forwardingSocket);
@@ -205,51 +263,23 @@ namespace CoreDht
         {
             return Identity.ToString();
         }
-    }
 
-    namespace temp
-    {
-        // To be fixed in CoreMemoryBus
-        public class HeirarchicalPublishingStrategy : PublishingStrategy, IPublishingStrategy
+        private void SendReply(NodeInfo target, NodeReply reply)
         {
-            public HeirarchicalPublishingStrategy(MessageHandlerDictionary messageHandlers)
-              : base(messageHandlers)
+            if (target.Equals(Identity))
             {
+                MessageBus.Publish(reply);
             }
-
-            public void Publish(Message message)
+            else
             {
-                Type msgType = message.GetType();
-                this.PublishToProxies(message, msgType);
-                do
-                {
-                    msgType = msgType.BaseType;
-                    this.PublishToProxies(message, msgType);
-                }
-                while (msgType != typeof(Message));
+                var forwardingSocket = ForwardingSockets[target.HostAndPort];
+                Marshaller.Send(reply, forwardingSocket);
             }
         }
 
-        public class PublishingStrategy
+        private void CloseHandler(ICorrelatedMessage<Guid> message)
         {
-            protected MessageHandlerDictionary MessageHandlers { get; private set; }
-
-            protected PublishingStrategy(MessageHandlerDictionary messageHandlers)
-            {
-                this.MessageHandlers = messageHandlers;
-            }
-
-            protected void PublishToProxies(Message message, Type msgType)
-            {
-                MessageHandlerProxies messageHandlerProxies;
-                if (!this.MessageHandlers.TryGetValue(msgType, out messageHandlerProxies))
-                {
-                    return;
-                }
-
-                var proxyCopy = new List<IMessageHandlerProxy>(messageHandlerProxies);
-                proxyCopy.ForEach(x => x.Publish(message));
-            }
+            MessageBus.Publish(new OperationComplete(message.CorrelationId));
         }
     }
 }

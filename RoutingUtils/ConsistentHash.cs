@@ -1,120 +1,185 @@
 ﻿using System;
-using System.Numerics;
-using Routing;
+using System.Linq;
+using System.Text;
 
 namespace CoreDht
 {
-    /// <summary>
-    /// We really need to deprecate the BigInteger implementation here, in favour of something fast...
-    /// </summary>
-    public class ConsistentHash : IComparable<ConsistentHash>, ICloneable<ConsistentHash>
+    public class ConsistentHash : IComparable<ConsistentHash>
     {
-        private BigInteger _bigKey;
-        private BigInteger _bigKeyMax;
-        private const int BitsPerByte = 8;
-
-        public ConsistentHash()
+        public class InconsistentRankException : Exception
         {
-            Init(new byte[1]);
+            public InconsistentRankException(string message) : base(message)
+            { }
         }
 
-        public ConsistentHash(byte[] hashBytes)
+        public byte[] Bytes { get; private set; }
+
+        public ConsistentHash(byte[] bytes)
         {
-            Init(hashBytes);
+            Bytes = bytes.ToArray();
         }
 
-        public ConsistentHash(BigInteger bigInteger) : this(bigInteger.ToByteArray())
-        { }
-
-        private void Init(byte[] hashBytes)
+        public ConsistentHash Zero()
         {
-            BitCount = hashBytes.Length*BitsPerByte;
-            _bigKeyMax = new BigInteger(1) << BitCount;
-
-            hashBytes = EnsureUnsigned(hashBytes);
-            _bigKey = new BigInteger(hashBytes);
+            var bytes = new byte[Bytes.Length];
+            return new ConsistentHash(bytes);
+        }
+        public ConsistentHash One()
+        {
+            var bytes = new byte[Bytes.Length];
+            bytes[0] = 1;
+            return new ConsistentHash(bytes);
         }
 
-        private static byte[] EnsureUnsigned(byte[] hashBytes)
+        private const int Hexadecimal = 16;
+
+        public static ConsistentHash New(string hex)
         {
-            if ((hashBytes[hashBytes.Length - 1] & 0x80) > 0)
+            int charCount = hex.Length;
+            byte[] bytes = new byte[charCount / 2];
+            for (int i = 0; i < charCount; i += 2)
             {
-                byte[] temp = new byte[hashBytes.Length];
-                Array.Copy(hashBytes, temp, hashBytes.Length);
-                hashBytes = new byte[hashBytes.Length + 1];
-                Array.Copy(temp, hashBytes, temp.Length);
+                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), Hexadecimal);
             }
-            return hashBytes;
+            return new ConsistentHash(bytes);
         }
 
-        public int BitCount { get; private set; }
+        private int Rank => Bytes.Length;
+        public int BitCount { get { return Rank*8; } }
 
-        public byte[] Bytes
+        public int CompareTo(ConsistentHash other)
         {
-            get { return _bigKey.ToByteArray(); }
-            set { Init(value); }
+            VerifyRank(other);
+
+            for (int i = 0; i < Bytes.Length; ++i)
+            {
+                if (Bytes[i] < other.Bytes[i]) return -1;
+                if (Bytes[i] > other.Bytes[i]) return 1;
+            }
+
+            return 0;
+        }
+
+        private void VerifyRank(ConsistentHash other)
+        {
+            if (other.Rank != Rank)
+            {
+                throw new InconsistentRankException($"Other ConsistentHash rank ({other.Rank}) different from this ({Rank})");
+            }
+        }
+
+        public static bool operator <(ConsistentHash lhs, ConsistentHash rhs)
+        {
+            return lhs.CompareTo(rhs) < 0;
+        }
+
+        public static bool operator >=(ConsistentHash lhs, ConsistentHash rhs)
+        {
+            return !(lhs < rhs);
+        }
+
+        public static bool operator <=(ConsistentHash lhs, ConsistentHash rhs)
+        {
+            return !(lhs > rhs);
+        }
+
+        public static bool operator >(ConsistentHash lhs, ConsistentHash rhs)
+        {
+            return lhs.CompareTo(rhs) > 0;
+        }
+
+        public static bool operator ==(ConsistentHash lhs, ConsistentHash rhs)
+        {
+            return lhs.CompareTo(rhs) == 0;
+        }
+
+        public static bool operator !=(ConsistentHash lhs, ConsistentHash rhs)
+        {
+            return !(lhs == rhs);
+        }
+
+        public override string ToString()
+        {
+            var hexString = new StringBuilder(Bytes.Length * 2);
+            foreach (var b in Bytes.Reverse())
+            {
+                hexString.AppendFormat("{0:x2}", b);
+            }
+            return hexString.ToString();
         }
 
         public override int GetHashCode()
         {
-            return _bigKey.GetHashCode();
+            return ToString().GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
             var other = obj as ConsistentHash;
-            if (other != null)
+            if (!ReferenceEquals(other, null))
             {
-                return _bigKey.Equals(other._bigKey);
-            }
+                VerifyRank(other);
 
+                for (int i = 0; i < Bytes.Length; ++i)
+                {
+                    if (Bytes[i] != other.Bytes[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
             return false;
         }
 
-        public int CompareTo(ConsistentHash other)
+        private byte[] ModuloAdd(byte[] other)
         {
-            return other._bigKey.CompareTo(_bigKey);
+            var result = new byte[Rank];
+            int carry = 0;
+            for (int i = other.Length - 1; i >= 0; --i)
+            {
+                int sum = Bytes[i] + other[i] + carry;
+                result[i] = (byte)(sum & 0xFF);
+                carry = sum >> 8;
+            } // Ignoring overflow implements modulo for us
+            return result;
         }
 
-        public ConsistentHash Clone()
+        public byte[] ShiftLeft(int bitcount)
         {
-            return new ConsistentHash(Bytes);
-        }
-
-        public override string ToString()
-        {
-            return _bigKey.ToString();
-        }
-
-        public static bool operator <(ConsistentHash lhs, ConsistentHash rhs)
-        {
-            return lhs._bigKey < rhs._bigKey;
-        }
-
-        public static bool operator >(ConsistentHash lhs, ConsistentHash rhs)
-        {
-            return lhs._bigKey > rhs._bigKey;
-        }
-        public static bool operator <=(ConsistentHash lhs, ConsistentHash rhs)
-        {
-            return lhs._bigKey <= rhs._bigKey;
-        }
-
-        public static bool operator >=(ConsistentHash lhs, ConsistentHash rhs)
-        {
-            return lhs._bigKey >= rhs._bigKey;
+            byte[] temp = new byte[Bytes.Length];
+            if (bitcount >= 8)
+            {
+                Array.Copy(Bytes, bitcount/8, temp, 0, temp.Length - (bitcount/8));
+            }
+            else
+            {
+                Array.Copy(Bytes, temp, temp.Length);
+            }
+            if (bitcount % 8 != 0)
+            {
+                for (int i = 0; i < temp.Length; i++)
+                {
+                    temp[i] <<= bitcount % 8;
+                    if (i < temp.Length - 1)
+                    {
+                        temp[i] |= (byte) (temp[i + 1] >> 8 - bitcount%8);
+                    }
+                }
+            }
+            return temp;
         }
 
         public static ConsistentHash operator +(ConsistentHash lhs, ConsistentHash rhs)
         {
-            return new ConsistentHash((lhs._bigKey + rhs._bigKey) % lhs._bigKeyMax);
+            lhs.VerifyRank(rhs);
+            return new ConsistentHash(lhs.ModuloAdd(rhs.Bytes));
         }
 
-        public static readonly ConsistentHash Zero = new ConsistentHash(0);
-
-        public static ConsistentHash BitValue(int i)
+        public static ConsistentHash operator <<(ConsistentHash lhs, int shift)
         {
-            return new ConsistentHash(new BigInteger(1) << i);
+            return new ConsistentHash(lhs.ShiftLeft(shift));
         }
     }
+
 }

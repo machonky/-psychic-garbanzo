@@ -1,4 +1,5 @@
 using System;
+using CoreMemoryBus.Messages;
 
 namespace CoreDht
 {
