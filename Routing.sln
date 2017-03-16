@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkRouting", "NetworkRo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoutingUtils", "RoutingUtils\RoutingUtils.csproj", "{95D4E61F-D8EC-42DC-AAFF-B7E71A840925}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{4A8198EC-3CFD-4D1E-BC54-82B6FED1008D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{95D4E61F-D8EC-42DC-AAFF-B7E71A840925}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{95D4E61F-D8EC-42DC-AAFF-B7E71A840925}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{95D4E61F-D8EC-42DC-AAFF-B7E71A840925}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A8198EC-3CFD-4D1E-BC54-82B6FED1008D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A8198EC-3CFD-4D1E-BC54-82B6FED1008D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A8198EC-3CFD-4D1E-BC54-82B6FED1008D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A8198EC-3CFD-4D1E-BC54-82B6FED1008D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

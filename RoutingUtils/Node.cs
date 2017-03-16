@@ -11,12 +11,11 @@ namespace CoreDht
 {
     public partial class Node : IPublisher<RoutableMessage>, IDisposable, IOutgoingSocket
     {
+        protected string SeedNode { get; }
         protected MemoryBus MessageBus { get; }
         protected DisposableStack Janitor { get; }
         protected NetMQActor Actor { get; }
-
         private IMessageSerializer Serializer { get; }
-
         private PairSocket Shim;
         private NetMQPoller Poller { get; }
         private NodeMarshaller Marshaller { get; }
@@ -30,9 +29,9 @@ namespace CoreDht
         private DealerSocket ListeningSocket { get; }
         public NetMQTimer InitTimer { get; set; }
 
-
         protected Node(NodeInfo identity, NodeConfiguration config)
         {
+            SeedNode = config.SeedNode;
             Serializer = config.Serializer;
             Marshaller = new NodeMarshaller(Serializer, config.HashingService);
             MessageBus = new MemoryBus();
@@ -59,6 +58,7 @@ namespace CoreDht
             FingerTable = new FingerTable(Identity, Identity.RoutingHash.BitCount);
             SuccessorTable = new SuccessorTable(Identity, config.SuccessorTableLength);
         }
+
 
         private void InitHandlers()
         {
@@ -255,7 +255,7 @@ namespace CoreDht
             var msg = new GetFingerTable(Identity,Identity, CorrelationFactory.GetNextCorrelation());
             MessageBus.Publish(new GetFingerTable.Await(msg.CorrelationId));
 
-            var forwardingSocket = ForwardingSockets[CreateHostAndPort("Touchy", 9000)];
+            var forwardingSocket = ForwardingSockets[SeedNode];
             Marshaller.Send(msg, forwardingSocket);
         }
 

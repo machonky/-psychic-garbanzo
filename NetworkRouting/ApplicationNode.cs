@@ -7,8 +7,8 @@ namespace NetworkRouting
 {
     public class ApplicationNode : Node
     {
-        public ApplicationNode(NodeInfo identity, IMessageSerializer serializer, INodeSocketFactory socketFactory, IConsistentHashingService hashingService) : 
-            base(identity, serializer, socketFactory, hashingService)
+        public ApplicationNode(NodeInfo identity, ApplicationNodeConfiguration config) : 
+            base(identity, config)
         {
             MessageBus.Subscribe(new ApplicationHandler(this));
         }

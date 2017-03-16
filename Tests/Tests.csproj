@@ -4,17 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{C320B250-18C5-4ED1-A848-5E98B720E145}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{4A8198EC-3CFD-4D1E-BC54-82B6FED1008D}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Routing</RootNamespace>
-    <AssemblyName>Routing</AssemblyName>
+    <RootNamespace>Tests</RootNamespace>
+    <AssemblyName>Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -24,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -33,26 +30,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AsyncIO, Version=0.1.25.0, Culture=neutral, PublicKeyToken=44a94435bd6f33f8, processorArchitecture=MSIL">
-      <HintPath>..\packages\AsyncIO.0.1.26.0\lib\net40\AsyncIO.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="CoreMemoryBus, Version=1.0.4.34, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CoreMemoryBus.1.0.4.34\lib\net45\CoreMemoryBus.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="NetMQ, Version=4.0.0.1, Culture=neutral, PublicKeyToken=a6decef4ddc58b3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\NetMQ.4.0.0.1\lib\net40\NetMQ.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="nunit.framework, Version=3.6.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.3.6.1\lib\net45\nunit.framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -61,38 +45,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CorrelatableRepository.cs" />
-    <Compile Include="DoUsefulWork.cs" />
-    <Compile Include="ICorrelatable.cs" />
-    <Compile Include="ICorrelatedMessage.cs" />
-    <Compile Include="IPublisher.cs" />
-    <Compile Include="IReplyEnvelope.cs" />
-    <Compile Include="IRepositoryItem.cs" />
-    <Compile Include="IRoutableMessage.cs" />
-    <Compile Include="LeaveNetwork.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Class1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PublisherReplyEnvelope.cs" />
-    <Compile Include="Repository.cs" />
-    <Compile Include="RepositoryItem.cs" />
-    <Compile Include="RoutableMessage.cs" />
-    <Compile Include="RoutableRepository.cs" />
-    <Compile Include="FingerTableEntry.cs" />
-    <Compile Include="StartUsefulWork.cs" />
-    <Compile Include="UsefulBoundedContext.cs" />
-    <Compile Include="UsefulBoundedContextRepository.cs" />
-    <Compile Include="UsefulWorkHandler.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\RoutingUtils\RoutingUtils.csproj">
-      <Project>{95d4e61f-d8ec-42dc-aaff-b7e71a840925}</Project>
+      <Project>{95D4E61F-D8EC-42DC-AAFF-B7E71A840925}</Project>
       <Name>RoutingUtils</Name>
     </ProjectReference>
   </ItemGroup>

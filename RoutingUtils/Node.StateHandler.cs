@@ -15,7 +15,7 @@ namespace CoreDht
             IAmTriggeredBy<FindSuccessor>,
             IHandle<JoinNetwork.Reply>
         {
-            CoreDht.Node Node { get; }
+            private Node Node { get; }
 
             public StateHandler(Guid correlationId, CoreDht.Node node) : base(correlationId)
             {

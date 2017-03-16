@@ -1,10 +1,10 @@
 using System.Security.Cryptography;
 
-namespace Routing
+namespace CoreDht
 {
     public class Sha1HashingService : ConsistentHashingService
     {
-        public Sha1HashingService() : base(new SHA1CryptoServiceProvider())
+        public Sha1HashingService() : base(SHA1.Create())
         { }
     }
 }

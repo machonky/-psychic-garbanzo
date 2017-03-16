@@ -4,18 +4,16 @@ using CoreMemoryBus.Messages;
 
 namespace CoreDht
 {
-    public partial class Node
+    partial class Node
     {
-        public class NodeHandler : CorrelatableRepository<Guid, StateHandler>,
-            IHandle<NodeReady>,
-            IHandle<TerminateNode>,
+        public class JoinNetworkHandler :
+            CorrelatableRepository<Guid, JoinNetworkHandler.StateHandler>,
             IHandle<CancelOperation>,
             IHandle<OperationComplete>
         {
             protected Node Node { get; }
 
-
-            public NodeHandler(Node node)
+            public JoinNetworkHandler(Node node)
             {
                 Node = node;
                 RepoItemFactory = CreateStateHandler;
@@ -26,13 +24,14 @@ namespace CoreDht
                 return new StateHandler(((ICorrelatedMessage<Guid>)msg).CorrelationId, Node);
             }
 
-            public void Handle(NodeReady message)
+            public class StateHandler : RepositoryItem<Guid, StateHandler>
             {
-                if (!Node.Identity.HostAndPort.Equals(Node.SeedNode))
+                public Node Node { get; }
+
+                public StateHandler(Guid correlationId, Node node) : base(correlationId)
                 {
-                    Node.Go();
+                    Node = node;
                 }
-                SendLocalMessage(new NodeInitialised());
             }
 
             public void Handle(CancelOperation message)
@@ -40,22 +39,9 @@ namespace CoreDht
                 Remove(message.CorrelationId);
             }
 
-            public void Handle(TerminateNode message)
-            {
-                if (Node.Identity.RoutingHash.Equals(message.RoutingTarget))
-                {
-                    Node.Poller.Stop();
-                }
-            }
-
             public void Handle(OperationComplete message)
             {
                 Remove(message.CorrelationId);
-            }
-
-            private void SendLocalMessage(Message msg)
-            {
-                Node.MessageBus.Publish(msg);
             }
         }
     }

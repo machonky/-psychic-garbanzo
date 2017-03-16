@@ -1,8 +1,8 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using CoreDht;
+using Routing;
 
-namespace Routing
+namespace CoreDht
 {
     public abstract class ConsistentHashingService : IConsistentHashingService
     {

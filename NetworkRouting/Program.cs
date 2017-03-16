@@ -35,14 +35,30 @@ namespace NetworkRouting
         private readonly IMessageSerializer _msgSerializer;
         private readonly IDnsProvider _dnsProvider;
         private readonly INodeSocketFactory _nodeSocketFactory;
+        private readonly IClock _clock;
+        private readonly ICorrelationFactory<Guid> _correlationFactory;
 
         Program()
         {
+            _dnsProvider = new DnsProvider();
+            _clock = new Clock();
             _hashingService = new Md5HashingService();
             _msgSerializer = new MessageSerializer();
             _nodeSocketFactory = new InProcNodeSocketFactory();
-            _nodeFactory = new ApplicationNodeFactory(_hashingService, _msgSerializer, _nodeSocketFactory);
-            _dnsProvider = new DnsProvider();
+            _correlationFactory = new GuidCorrelationFactory();
+
+            var hostEntry = _dnsProvider.GetHostEntry("localhost");
+            var config = new ApplicationNodeConfiguration
+            {
+                HashingService = _hashingService,
+                Serializer = _msgSerializer,
+                NodeSocketFactory = _nodeSocketFactory,
+                Clock = _clock,
+                CorrelationFactory = _correlationFactory,
+                SuccessorTableLength = 3,
+                SeedNode = $"{hostEntry.HostName}:9000"
+            };
+            _nodeFactory = new ApplicationNodeFactory(config);
         }
 
         static void Main(string[] args)
@@ -51,5 +67,9 @@ namespace NetworkRouting
             theApp.Run(args);
         }
     }
+
+    public class ApplicationNodeConfiguration : NodeConfiguration
+    {}
+
 }
 

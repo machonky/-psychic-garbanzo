@@ -12,5 +12,6 @@ namespace CoreDht
         public IClock Clock { get; set; }
         public ICorrelationFactory<Guid> CorrelationFactory { get; set; }
         public int SuccessorTableLength { get; set; }
+        public string SeedNode { get; set; }
     }
 }

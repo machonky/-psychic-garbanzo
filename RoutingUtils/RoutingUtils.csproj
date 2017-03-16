@@ -79,6 +79,7 @@
     <Compile Include="ICorrelationFactory.cs" />
     <Compile Include="Node.FindSuccessorToHashHandler.cs" />
     <Compile Include="Node.GetFingerTableHandler.cs" />
+    <Compile Include="Node.JoinNetworkHandler.cs" />
     <Compile Include="Node.StateHandler.cs" />
     <Compile Include="NodeConfiguration.cs" />
     <Compile Include="NodeMessage.cs" />
