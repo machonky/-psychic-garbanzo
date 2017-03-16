@@ -63,6 +63,7 @@ namespace CoreDht
         private void InitHandlers()
         {
             MessageBus.Subscribe(new NodeHandler(this));
+            MessageBus.Subscribe(new AwaitMessageHandler());
             MessageBus.Subscribe(new JoinNetworkHandler(this));
             MessageBus.Subscribe(new GetFingerTableHandler(this));
             MessageBus.Subscribe(new FindSuccessorToHashHandler(this));
@@ -250,10 +251,10 @@ namespace CoreDht
         //temporary
         private void Go()
         {
-            //var msg = EmitJoinNetwork();
-            //MessageBus.Publish(new JoinNetwork.Await(msg.CorrelationId));
-            var msg = new GetFingerTable(Identity,Identity, CorrelationFactory.GetNextCorrelation());
-            MessageBus.Publish(new GetFingerTable.Await(msg.CorrelationId));
+            var msg = EmitJoinNetwork();
+            MessageBus.Publish(new JoinNetwork.Await(msg.CorrelationId));
+            //var msg = new GetFingerTable(Identity,Identity, CorrelationFactory.GetNextCorrelation());
+            //MessageBus.Publish(new GetFingerTable.Await(msg.CorrelationId));
 
             var forwardingSocket = ForwardingSockets[SeedNode];
             Marshaller.Send(msg, forwardingSocket);

@@ -9,11 +9,11 @@ namespace CoreDht
 {
     partial class Node
     {
-        public class StateHandler : RepositoryItem<Guid, StateHandler>,
-            IAmTriggeredBy<JoinNetwork>,
-            IAmTriggeredBy<JoinNetwork.Await>,
-            IAmTriggeredBy<FindSuccessor>,
-            IHandle<JoinNetwork.Reply>
+        public class StateHandler : RepositoryItem<Guid, StateHandler>//,
+            //IAmTriggeredBy<JoinNetwork>,
+            //IAmTriggeredBy<JoinNetwork.Await>,
+            //IAmTriggeredBy<FindSuccessor>,
+            //sIHandle<JoinNetwork.Reply>
         {
             private Node Node { get; }
 

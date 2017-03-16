@@ -20,14 +20,10 @@ namespace CoreDht
         /// <summary>
         /// This is an internal message to ensure that this node catches the response from the Joinee.
         /// </summary>
-        public class Await : Message, ICorrelatedMessage<Guid>
+        public class Await : AwaitMessage, ICorrelatedMessage<Guid>
         {
-            public Guid CorrelationId { get; }
-
-            public Await(Guid correlationId)
-            {
-                CorrelationId = correlationId;
-            }
+            public Await(Guid correlationId):base(correlationId)
+            {}
         }
 
         /// <summary>
@@ -46,4 +42,4 @@ namespace CoreDht
             }
         }
     }
-}
+S}

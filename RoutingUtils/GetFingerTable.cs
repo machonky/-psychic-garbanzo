@@ -14,14 +14,10 @@ namespace CoreDht
             CorrelationId = correlationId;
         }
 
-        public class Await : Message, ICorrelatedMessage<Guid>
+        public class Await : AwaitMessage
         {
-            public Guid CorrelationId { get; }
-
-            public Await(Guid correlationId)
-            {
-                CorrelationId = correlationId;
-            }
+            public Await(Guid correlationId):base(correlationId)
+            {}
         }
 
         public class Reply : NodeReply, ICorrelatedMessage<Guid>

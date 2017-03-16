@@ -21,14 +21,10 @@ namespace CoreDht
         /// <summary>
         /// This is an internal message to ensure that we can catch a FindSuccessor request that is forwarded over the network
         /// </summary>
-        public class Await : Message, ICorrelatedMessage<Guid>
+        public class Await : AwaitMessage
         {
-            public Await(Guid correlationId)
-            {
-                CorrelationId = correlationId;
-            }
-
-            public Guid CorrelationId { get; }
+            public Await(Guid correlationId):base(correlationId)
+            { }
         }
 
         /// <summary>
