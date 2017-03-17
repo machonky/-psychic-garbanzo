@@ -43,7 +43,7 @@ namespace CoreDht
                     {
                         var msg = new FindSuccessorToHash.Reply(message.Recipient, Node.Identity, message.CorrelationId);
                         Node.SendReply(message.Recipient, msg);
-                        Node.CloseHandler(message);
+                        Node.CloseHandler(CorrelationId);
                     }
                     else
                     {
@@ -58,7 +58,7 @@ namespace CoreDht
                                 var msg = new FindSuccessorToHash.Reply(message.Recipient, networkReply.Successor, message.CorrelationId);
                                 Node.SendReply(message.Recipient, msg);
                                 Node.MessageBus.Unsubscribe(responder);
-                                Node.CloseHandler(message);
+                                Node.CloseHandler(CorrelationId);
                             });
 
                         // Forward a new query to another node and reply back to this node.

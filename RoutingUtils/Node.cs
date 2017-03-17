@@ -278,9 +278,9 @@ namespace CoreDht
             }
         }
 
-        private void CloseHandler(ICorrelatedMessage<Guid> message)
+        private void CloseHandler(Guid handlerCorrelation)
         {
-            MessageBus.Publish(new OperationComplete(message.CorrelationId));
+            MessageBus.Publish(new OperationComplete(handlerCorrelation));
         }
     }
 }

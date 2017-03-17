@@ -54,7 +54,7 @@ namespace CoreDht
                                 {
                                     Node.MessageBus.Unsubscribe(responder);
                                     Node.SendReply(message.Recipient, new GetFingerTable.Reply(Node.Identity, message.CorrelationId, entries));
-                                    Node.CloseHandler(message);
+                                    Node.CloseHandler(CorrelationId);
                                 }
                             });
                     }
