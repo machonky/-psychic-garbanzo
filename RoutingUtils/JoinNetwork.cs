@@ -6,7 +6,8 @@ namespace CoreDht
     /// <summary>
     /// A Node joining a network transmits this message to any known node. The reciever replies or forwards a response to calculate 
     /// where in the network the applicant should insert itself.
-    /// The correlationId is a new Guid to identify all network correspondence relating to the operation.
+    /// The correlationId is a new Guid to identify all network correspondence relating to the operation.'
+    /// In the context of this message, the recipient refers to the Joinee.
     /// </summary>
     public class JoinNetwork : NodeMessage, ICorrelatedMessage<Guid>
     {
@@ -20,7 +21,7 @@ namespace CoreDht
         /// <summary>
         /// This is an internal message to ensure that this node catches the response from the Joinee.
         /// </summary>
-        public class Await : AwaitMessage, ICorrelatedMessage<Guid>
+        public class Await : AwaitMessage
         {
             public Await(Guid correlationId):base(correlationId)
             {}

@@ -65,8 +65,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ApplicationNode.cs" />
-    <Compile Include="ApplicationNodeFactory.cs" />
+    <Compile Include="MyAppNode.cs" />
+    <Compile Include="MyAppNodeConfiguration.cs" />
+    <Compile Include="MyAppNodeFactory.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

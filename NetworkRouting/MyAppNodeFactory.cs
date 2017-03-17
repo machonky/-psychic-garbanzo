@@ -4,12 +4,12 @@ using Routing;
 
 namespace NetworkRouting
 {
-    public class ApplicationNodeFactory : INodeFactory
+    public class MyAppNodeFactory : INodeFactory
     {
         private readonly IConsistentHashingService _hashingService;
-        private readonly ApplicationNodeConfiguration _config;
+        private readonly MyAppNodeConfiguration _config;
 
-        public ApplicationNodeFactory(ApplicationNodeConfiguration config)
+        public MyAppNodeFactory(MyAppNodeConfiguration config)
         {
             _hashingService = config.HashingService;
             _config = config;
@@ -22,7 +22,7 @@ namespace NetworkRouting
                 routingHash: _hashingService.GetConsistentHash(uniqueIdentifier), 
                 hostAndPort: hostAndPort);
 
-            return new ApplicationNode(identity, _config);
+            return new MyAppNode(identity, _config);
         }
     }
 }

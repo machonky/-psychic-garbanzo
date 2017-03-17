@@ -63,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AwaitMessage.cs" />
+    <Compile Include="AwaitMessageHandler.cs" />
     <Compile Include="CancelOperation.cs" />
     <Compile Include="Clock.cs" />
     <Compile Include="ConsistentHash.cs" />

@@ -5,9 +5,9 @@ using Routing;
 
 namespace NetworkRouting
 {
-    public class ApplicationNode : Node
+    public class MyAppNode : Node
     {
-        public ApplicationNode(NodeInfo identity, ApplicationNodeConfiguration config) : 
+        public MyAppNode(NodeInfo identity, MyAppNodeConfiguration config) : 
             base(identity, config)
         {
             MessageBus.Subscribe(new ApplicationHandler(this));
@@ -15,9 +15,9 @@ namespace NetworkRouting
 
         class ApplicationHandler : IHandle<NodeInitialised>
         {
-            private readonly ApplicationNode _host;
+            private readonly MyAppNode _host;
 
-            public ApplicationHandler(ApplicationNode host)
+            public ApplicationHandler(MyAppNode host)
             {
                 _host = host;
             }
