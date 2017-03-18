@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using CoreMemoryBus;
 using CoreMemoryBus.Messages;
+using CoreMemoryBus.Messaging;
 
 namespace CoreDht
 {
@@ -18,12 +20,12 @@ namespace CoreDht
             public NodeHandler(Node node)
             {
                 Node = node;
-                RepoItemFactory = CreateStateHandler;
-            }
-
-            StateHandler CreateStateHandler(Message msg)
-            {
-                return new StateHandler(((ICorrelatedMessage<Guid>)msg).CorrelationId, Node);
+                var stateFactory = new StateHandlerFactory(Node);
+                foreach (var messageType in stateFactory.TriggerMessageTypes)
+                {
+                    TriggerMessageTypes.Add(messageType);
+                }
+                RepoItemFactory = stateFactory.CreateHandler;
             }
 
             public void Handle(NodeReady message)
