@@ -84,6 +84,7 @@
     <Compile Include="Node.GetSuccessorListHandler.cs" />
     <Compile Include="Node.JoinNetworkHandler.cs" />
     <Compile Include="Node.StateHandler.cs" />
+    <Compile Include="Node.StateHandlerFactory.cs" />
     <Compile Include="NodeConfiguration.cs" />
     <Compile Include="NodeMessage.cs" />
     <Compile Include="Reference.cs" />
