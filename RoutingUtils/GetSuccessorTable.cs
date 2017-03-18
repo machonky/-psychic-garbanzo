@@ -3,12 +3,12 @@ using CoreMemoryBus.Messages;
 
 namespace CoreDht
 {
-    public class GetFingerTable : NodeMessage, ICorrelatedMessage<Guid>
+    public class GetSuccessorTable : NodeMessage, ICorrelatedMessage<Guid>
     {
         public Guid CorrelationId { get; }
         public NodeInfo ForNode { get; }
 
-        public GetFingerTable(NodeInfo recipient, NodeInfo forNode, Guid correlationId) : base(recipient)
+        public GetSuccessorTable(NodeInfo recipient, NodeInfo forNode, Guid correlationId) : base(recipient)
         {
             ForNode = forNode;
             CorrelationId = correlationId;
@@ -23,12 +23,10 @@ namespace CoreDht
         public class Reply : NodeReply, ICorrelatedMessage<Guid>
         {
             public Guid CorrelationId { get; }
-            public FingerTableEntry[] FingerTableEntries { get; }
 
-            public Reply(NodeInfo sender, Guid correlationId, FingerTableEntry[] fingerTableEntries) : base(sender)
+            public Reply(NodeInfo sender, Guid correlationId) : base(sender)
             {
                 CorrelationId = correlationId;
-                FingerTableEntries = fingerTableEntries;
             }
         }
     }

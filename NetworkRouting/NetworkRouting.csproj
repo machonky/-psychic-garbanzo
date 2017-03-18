@@ -38,11 +38,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="CoreMemoryBus, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CoreMemoryBus.1.0.5.280\lib\net452\CoreMemoryBus.dll</HintPath>
+      <HintPath>..\packages\CoreMemoryBus.1.0.6.290\lib\net452\CoreMemoryBus.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="CoreMemoryBus.Messages, Version=1.0.5.182, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CoreMemoryBus.Messages.1.0.5.182\lib\net45\CoreMemoryBus.Messages.dll</HintPath>
+    <Reference Include="CoreMemoryBus.Messages, Version=1.0.6.290, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CoreMemoryBus.Messages.1.0.6.290\lib\net452\CoreMemoryBus.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="NetMQ, Version=4.0.0.1, Culture=neutral, PublicKeyToken=a6decef4ddc58b3a, processorArchitecture=MSIL">

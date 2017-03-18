@@ -35,11 +35,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="CoreMemoryBus, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CoreMemoryBus.1.0.5.280\lib\net452\CoreMemoryBus.dll</HintPath>
+      <HintPath>..\packages\CoreMemoryBus.1.0.6.290\lib\net452\CoreMemoryBus.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="CoreMemoryBus.Messages, Version=1.0.5.280, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CoreMemoryBus.Messages.1.0.5.280\lib\net452\CoreMemoryBus.Messages.dll</HintPath>
+    <Reference Include="CoreMemoryBus.Messages, Version=1.0.6.290, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CoreMemoryBus.Messages.1.0.6.290\lib\net452\CoreMemoryBus.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="NetMQ, Version=4.0.0.1, Culture=neutral, PublicKeyToken=a6decef4ddc58b3a, processorArchitecture=MSIL">
@@ -68,7 +68,6 @@
     <Compile Include="Clock.cs" />
     <Compile Include="ConsistentHash.cs" />
     <Compile Include="ConsistentHashingService.cs" />
-    <Compile Include="CorrelatableRepository.cs" />
     <Compile Include="DealerSocketWrapper.cs" />
     <Compile Include="DisposableStack.cs" />
     <Compile Include="DnsProvider.cs" />
@@ -77,10 +76,12 @@
     <Compile Include="FingerTable.cs" />
     <Compile Include="FingerTableEntryExtensions.cs" />
     <Compile Include="GetFingerTable.cs" />
+    <Compile Include="GetSuccessorTable.cs" />
     <Compile Include="GuidCorrelationFactory.cs" />
     <Compile Include="ICorrelationFactory.cs" />
     <Compile Include="Node.FindSuccessorToHashHandler.cs" />
     <Compile Include="Node.GetFingerTableHandler.cs" />
+    <Compile Include="Node.GetSuccessorListHandler.cs" />
     <Compile Include="Node.JoinNetworkHandler.cs" />
     <Compile Include="Node.StateHandler.cs" />
     <Compile Include="NodeConfiguration.cs" />
@@ -95,15 +96,12 @@
     <Compile Include="ObjectCache.cs" />
     <Compile Include="ICloneable.cs" />
     <Compile Include="IConsistentHashingService.cs" />
-    <Compile Include="ICorrelatableItem.cs" />
-    <Compile Include="ICorrelatedMessage.cs" />
     <Compile Include="IDnsProvider.cs" />
     <Compile Include="IMessageSerializer.cs" />
     <Compile Include="INodeFactory.cs" />
     <Compile Include="INodeSocketFactory.cs" />
     <Compile Include="InProcNodeSocketFactory.cs" />
     <Compile Include="IPublisher.cs" />
-    <Compile Include="IRepositoryItem.cs" />
     <Compile Include="IRoutableMessage.cs" />
     <Compile Include="JoinNetwork.cs" />
     <Compile Include="Md5HashingService.cs" />
@@ -113,8 +111,6 @@
     <Compile Include="NodeInfo.cs" />
     <Compile Include="OperationComplete.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Repository.cs" />
-    <Compile Include="RepositoryItem.cs" />
     <Compile Include="RequestResponseHandler.cs" />
     <Compile Include="RoutableMessage.cs" />
     <Compile Include="NodeMarshaller.cs" />

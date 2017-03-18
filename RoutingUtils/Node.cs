@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using CoreMemoryBus;
 using CoreMemoryBus.Messages;
 using CoreMemoryBus.Messaging;
 using NetMQ;
@@ -64,9 +65,6 @@ namespace CoreDht
         {
             MessageBus.Subscribe(new NodeHandler(this));
             MessageBus.Subscribe(new AwaitMessageHandler());
-            MessageBus.Subscribe(new JoinNetworkHandler(this));
-            MessageBus.Subscribe(new GetFingerTableHandler(this));
-            MessageBus.Subscribe(new FindSuccessorToHashHandler(this));
         }
 
         private NetMQTimer CreateInitTimer()

@@ -1,115 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using CoreMemoryBus;
 using CoreMemoryBus.Messages;
 using CoreMemoryBus.Messaging;
+using CoreMemoryBus.Util;
 
 namespace CoreDht
 {
     partial class Node
     {
-        public class StateHandler : RepositoryItem<Guid, StateHandler>//,
-            //IAmTriggeredBy<JoinNetwork>,
-            //IAmTriggeredBy<JoinNetwork.Await>,
-            //IAmTriggeredBy<FindSuccessor>,
-            //sIHandle<JoinNetwork.Reply>
+        /// <summary>
+        /// A StateHandler is a handler created at runtime by a repository in response to a message that will 
+        /// cause the handler to be instantiated. Typically for async-awaiting a response to a network message to another node.
+        /// The correlationId of the handler is the same as the message that caused it to be instantiated.
+        /// </summary>
+        public class StateHandler : RepositoryItem<Guid>
         {
-            private Node Node { get; }
+            protected Node Node { get; }
 
-            public StateHandler(Guid correlationId, CoreDht.Node node) : base(correlationId)
+            protected StateHandler(Guid correlationId, CoreDht.Node node) : base(correlationId)
             {
                 Node = node;
-            }
-
-            public void Handle(JoinNetwork message)
-            {
-                // This node is being queried to join the network
-                // We need to find the successor to the applicant
-                var responder = new RequestResponseHandler<Guid>(Node.MessageBus);
-                Node.MessageBus.Subscribe(responder);
-
-                var newCorrelation = Node.CorrelationFactory.GetNextCorrelation();
-                responder.Publish<FindSuccessor, FindSuccessor.Reply>(
-                    new FindSuccessor(Node.Identity, message.Recipient, newCorrelation),
-                    reply =>
-                    {
-                        // Then transmit the JoinNetwork.Reply to the applicant
-                        var joinReply = new JoinNetwork.Reply(reply.Successor, message.CorrelationId, reply.SuccessorList);
-                        var forwardingSocket = Node.ForwardingSockets[message.Recipient.HostAndPort];
-                        Node.Marshaller.Send(joinReply, forwardingSocket);
-
-                        Node.MessageBus.Unsubscribe(responder);
-                        SendLocalMessage(new OperationComplete(message.CorrelationId));
-                    });
-            }
-
-            public void Handle(JoinNetwork.Await message)
-            {
-                // This node is applying to join the network and waiting for a response
-            }
-
-            public void Handle(JoinNetwork.Reply message)
-            {
-                // The network has calculated a successor to connect to.
-                Node.Successor = message.Sender;
-
-                // Recalculate the finger table based on this news
-                var successors = message.SuccessorList;
-                // Initiate the 3 step join process from here
-                // #Initialise fingers
-                // #Update fingers of existing nodes
-                // #Transfer keys
-
-                CloseHandler(message);
             }
 
             protected void SendLocalMessage(Message msg)
             {
                 Node.MessageBus.Publish(msg);
-            }
-
-            public void Handle(FindSuccessor message)
-            {
-                if (Node.IsInDomain(message.ToNode.RoutingHash))
-                {
-                    // This node is the successor
-                    var reply = new FindSuccessor.Reply(
-                        message.Recipient,
-                        Node.Identity,
-                        message.CorrelationId,
-                        Node.SuccessorTable.Entries.DistinctNodes());
-
-                    SendReply(message.Recipient, reply);
-
-                    CloseHandler(message);
-                }
-                else // forward around the ring and wait for a response
-                {
-                    // We first need to ensure we catch the response here
-                    var responder = new RequestResponseHandler<Guid>(Node.MessageBus);
-                    Node.MessageBus.Subscribe(responder);
-
-                    var @await = new FindSuccessor.Await(message.CorrelationId);
-                    responder.Publish<FindSuccessor.Await, FindSuccessor.Reply>(@await,
-                        reply =>
-                        {
-                            SendReply(message.Recipient, new FindSuccessor.Reply(message.Recipient, reply.Successor,
-                                message.CorrelationId, reply.SuccessorList));
-
-                            Node.MessageBus.Unsubscribe(responder);
-                            CloseHandler(message);
-                        });
-
-                    NodeInfo closestNode = Node.FindClosestPrecedingFinger(message.ToNode.RoutingHash);
-                    var forwardingSocket = Node.ForwardingSockets[closestNode.HostAndPort];
-                    Node.Marshaller.Send(message, forwardingSocket);
-                }
-            }
-
-            protected void CloseHandler(ICorrelatedMessage<Guid> message)
-            {
-                SendLocalMessage(new OperationComplete(message.CorrelationId));
             }
 
             protected void SendReply(NodeInfo target, NodeReply reply)
@@ -123,6 +38,56 @@ namespace CoreDht
                     var forwardingSocket = Node.ForwardingSockets[target.HostAndPort];
                     Node.Marshaller.Send(reply, forwardingSocket);
                 }
+            }
+        }
+
+        public class StateHandlerFactory
+        {
+            private static readonly Dictionary<Type, Func<Guid, Node, StateHandler>> _stateHandlers;
+
+            static StateHandlerFactory()
+            {
+                Func<Guid, Node, StateHandler>
+                    joinNetworkHandler = (guid, node) => new JoinNetworkHandler(guid, node),
+                    findSuccessorHandler = (guid, node) => new FindSuccessorToHashHandler(guid, node),
+                    getFingerTableHandler = (guid, node) => new GetFingerTableHandler(guid, node),
+                    getSuccessorHandler = (guid, node) => new GetSuccessorListHandler(guid, node);
+
+                _stateHandlers =
+                    new Dictionary<Type, Func<Guid, Node, StateHandler>>
+                    {
+                        {typeof(JoinNetwork), joinNetworkHandler},
+                        {typeof(JoinNetwork.Await), joinNetworkHandler},
+                        {typeof(FindSuccessorToHash), findSuccessorHandler},
+                        {typeof(FindSuccessorToHash.Await), findSuccessorHandler},
+                        {typeof(GetFingerTable), getFingerTableHandler},
+                        {typeof(GetFingerTable.Await), getFingerTableHandler},
+                        {typeof(GetSuccessorTable),getSuccessorHandler},
+                        {typeof(GetSuccessorTable.Await),getSuccessorHandler},
+                    };
+            }
+
+            public StateHandlerFactory(Node node)
+            {
+                Node = node;
+            }
+
+            public Node Node { get; }
+
+            public IEnumerable<Type> TriggerMessageTypes => _stateHandlers.Keys;
+
+            public StateHandler CreateHandler(Message msg)
+            {
+                var cMsg = msg as ICorrelatedMessage<Guid>;
+                if (cMsg != null)
+                {
+                    Func<Guid, Node, StateHandler> factory;
+                    if (_stateHandlers.TryGetValue(msg.GetType(), out factory))
+                    {
+                        return factory(cMsg.CorrelationId, Node);
+                    }
+                }
+                throw new NotImplementedException($"No state handler for {msg.GetType()}");
             }
         }
     }
