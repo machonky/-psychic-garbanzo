@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using CoreMemoryBus.Messages;
+using CoreMemoryBus.Util;
 
 namespace CoreDht
 {
@@ -8,28 +9,32 @@ namespace CoreDht
     {
         public class StateHandlerFactory
         {
-            private static readonly Dictionary<Type, Func<Guid, Node, StateHandler>> _stateHandlers;
+            private static readonly Dictionary<Type, Func<Guid, Node, StateHandler>> _stateHandlers =
+                new Dictionary<Type, Func<Guid, Node, StateHandler>>();
 
             static StateHandlerFactory()
             {
-                Func<Guid, Node, StateHandler>
-                    joinNetworkHandler = (guid, node) => new JoinNetworkHandler(guid, node),
-                    findSuccessorHandler = (guid, node) => new FindSuccessorToHashHandler(guid, node),
-                    getFingerTableHandler = (guid, node) => new GetFingerTableHandler(guid, node),
-                    getSuccessorHandler = (guid, node) => new GetSuccessorListHandler(guid, node);
+                var handlerTypes = new[]
+                {
+                    typeof(JoinNetworkHandler),
+                    typeof(FindSuccessorToHashHandler),
+                    typeof(GetFingerTableHandler),
+                    typeof(GetSuccessorHandler),
+                    typeof(RequestKeysHandler)
+                };
 
-                _stateHandlers =
-                    new Dictionary<Type, Func<Guid, Node, StateHandler>>
+                foreach (var handlerType in handlerTypes)
+                {
+                    var triggerHandlerInterfaces = PubSubCommon.GetMessageTriggerInterfaces(handlerType.GetInterfaces());
+                    Func<Guid, Node, StateHandler> createHandler =
+                        (guid, node) => (StateHandler) Activator.CreateInstance(handlerType, guid, node);
+
+                    foreach (var triggers in triggerHandlerInterfaces)
                     {
-                        {typeof(JoinNetwork), joinNetworkHandler},
-                        {typeof(JoinNetwork.Await), joinNetworkHandler},
-                        {typeof(FindSuccessorToHash), findSuccessorHandler},
-                        {typeof(FindSuccessorToHash.Await), findSuccessorHandler},
-                        {typeof(GetFingerTable), getFingerTableHandler},
-                        {typeof(GetFingerTable.Await), getFingerTableHandler},
-                        {typeof(GetSuccessorTable), getSuccessorHandler},
-                        {typeof(GetSuccessorTable.Await), getSuccessorHandler},
-                    };
+                        var msgType = triggers.GetGenericArguments()[0];
+                        _stateHandlers.Add(msgType, createHandler);
+                    }
+                }
             }
 
             public StateHandlerFactory(Node node)
