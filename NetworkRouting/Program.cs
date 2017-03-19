@@ -19,7 +19,7 @@ namespace NetworkRouting
                 NodeSocketFactory = _nodeSocketFactory,
                 Clock = _clock,
                 CorrelationFactory = _correlationFactory,
-                SuccessorTableLength = 3,
+                SuccessorCount = 3,
                 SeedNode = $"{hostEntry.HostName}:9000"
             };
 

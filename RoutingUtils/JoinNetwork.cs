@@ -34,12 +34,17 @@ namespace CoreDht
         public class Reply : NodeReply, ICorrelatedMessage<Guid>
         {
             public Guid CorrelationId { get; }
-            public NodeInfo[] SuccessorList { get; }
+            public NodeInfo[] SuccessorList { get; set; }
 
-            public Reply(NodeInfo sender, Guid correlationId, NodeInfo[] successorList) : base(sender)
+            public RoutingTableEntry[] RoutingTableEntries { get; set; }
+
+            public bool IsReadyToTransmit =>
+                //SuccessorList != null && // TODO
+                RoutingTableEntries != null;
+
+            public Reply(NodeInfo sender, Guid correlationId) : base(sender)
             {
                 CorrelationId = correlationId;
-                SuccessorList = successorList;
             }
         }
     }

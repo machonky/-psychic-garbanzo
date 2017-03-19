@@ -1,0 +1,43 @@
+﻿using System;
+using CoreMemoryBus;
+using CoreMemoryBus.Messaging;
+
+namespace CoreDht
+{
+    partial class Node
+    {
+        public class GetSuccessorHandler : StateHandler // TODO
+            , IAmTriggeredBy<GetSuccessor>
+            , IAmTriggeredBy<GetSuccessor.Await>
+        {
+            public GetSuccessorHandler(Guid correlationId, Node node) :base(correlationId, node)
+            {}
+
+            public void Handle(GetSuccessor message)
+            {
+                var responder = new RequestResponseHandler<Guid>(Node.MessageBus);
+                Subscribe(responder);
+
+                // if this node is the initiator...use the same correlation on different nodes
+                // ensure we await all responses from all successors
+                var remainingResponses = new Reference<int>(Node.SuccessorCount);
+
+
+
+                if (message.SuccessorIndex >= 0)
+                {
+                    var nextSuccessorIndex = message.SuccessorIndex - 1;
+
+                    // Forward to the next successor
+                    var forwardMsg = new GetSuccessor(message.Recipient, message.ForNode, GetNextCorrelation(), nextSuccessorIndex);
+                    ForwardMessageTo(Node.Successor, forwardMsg); // trap a potential loop
+                }
+
+                // reply with this node information
+            }
+
+            public void Handle(GetSuccessor.Await message)
+            {}
+        }
+    }
+}

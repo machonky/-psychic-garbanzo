@@ -15,17 +15,17 @@ namespace CoreDht
             for (int i = 0; i < tableLength; ++i)
             {
                 var finger = routingHash + routingHash.One() << i;
-                Entries[i] = new FingerTableEntry(finger, identity);
+                Entries[i] = new RoutingTableEntry(finger, identity);
             }
         }
 
-        public static FingerTableEntry[] CreateEntries(int entryCount, ConsistentHash nodeHash)
+        public static RoutingTableEntry[] CreateEntries(int entryCount, ConsistentHash nodeHash)
         {
             var entries = RoutingTable.CreateEntries(entryCount);
             for (int i = 0; i < entryCount; ++i)
             {
                 var finger = nodeHash + nodeHash.One() << i;
-                entries[i] = new FingerTableEntry(finger, null);
+                entries[i] = new RoutingTableEntry(finger, null);
             }
 
             return entries;

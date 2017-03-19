@@ -11,7 +11,7 @@ namespace CoreDht
             for (int i = 0; i < Entries.Length; ++i)
             {
                 var finger = identity.RoutingHash;
-                Entries[i] = new FingerTableEntry(finger, identity);
+                Entries[i] = new RoutingTableEntry(finger, identity);
             }
         }
 

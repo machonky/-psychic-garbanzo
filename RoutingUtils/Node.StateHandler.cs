@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using CoreMemoryBus.Messages;
 using CoreMemoryBus.Messaging;
-using CoreMemoryBus.Util;
 
 namespace CoreDht
 {
@@ -27,17 +25,57 @@ namespace CoreDht
                 Node.MessageBus.Publish(msg);
             }
 
-            protected void SendReply(NodeInfo target, NodeReply reply)
+            protected void SendReplyTo(NodeInfo target, NodeReply reply)
             {
                 if (target.Equals(Node.Identity))
                 {
-                    Node.MessageBus.Publish(reply);
+                    SendLocalMessage(reply);
                 }
                 else
                 {
                     var forwardingSocket = Node.ForwardingSockets[target.HostAndPort];
                     Node.Marshaller.Send(reply, forwardingSocket);
                 }
+            }
+
+            protected void ForwardMessageTo(NodeInfo target, NodeMessage msg)
+            {
+                if (target.Equals(Node.Identity))
+                {
+                    SendLocalMessage(msg);
+                }
+                else
+                {
+                    var forwardingSocket = Node.ForwardingSockets[target.HostAndPort];
+                    Node.Marshaller.Send(msg, forwardingSocket);
+                }
+            }
+
+            protected Guid GetNextCorrelation()
+            {
+                return Node.CorrelationFactory.GetNextCorrelation();
+            }
+
+            protected void CloseHandler()
+            {
+                Node.CloseHandler(CorrelationId);
+            }
+
+            protected void Subscribe(object messageHandler)
+            {
+                Node.MessageBus.Subscribe(messageHandler);
+            }
+
+            protected void Unsubscribe(RequestResponseHandler<Guid> responder)
+            {
+                Node.MessageBus.Unsubscribe(responder);
+            }
+
+            protected void CloseHandlerWithReply(NodeReply replyMsg, NodeInfo replyTarget, RequestResponseHandler<Guid> responder = null)
+            {
+                SendReplyTo(replyTarget, replyMsg);
+                if (responder != null) Unsubscribe(responder);
+                CloseHandler();
             }
         }
     }

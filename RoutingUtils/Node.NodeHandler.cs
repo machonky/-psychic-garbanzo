@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using CoreMemoryBus;
 using CoreMemoryBus.Messages;
 using CoreMemoryBus.Messaging;

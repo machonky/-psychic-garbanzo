@@ -7,14 +7,14 @@ namespace CoreDht
             Entries = CreateEntries(tableLength);
         }
 
-        public static FingerTableEntry[] CreateEntries(int tableLength)
+        public static RoutingTableEntry[] CreateEntries(int tableLength)
         {
-            return new FingerTableEntry[tableLength];
+            return new RoutingTableEntry[tableLength];
         }
 
-        public FingerTableEntry[] Entries { get; }
+        public RoutingTableEntry[] Entries { get; }
 
-        public FingerTableEntry this[int index]
+        public RoutingTableEntry this[int index]
         {
             get { return Entries[index]; }
             set { Entries[index] = value; }
@@ -31,11 +31,11 @@ namespace CoreDht
             }
         }
 
-        public void Copy(FingerTableEntry[] fingerTableEntries)
+        public void Copy(RoutingTableEntry[] routingTableEntries)
         {
-            for (int i = 0; i < fingerTableEntries.Length; ++i)
+            for (int i = 0; i < routingTableEntries.Length; ++i)
             {
-                Entries[i] = fingerTableEntries[i];
+                Entries[i] = routingTableEntries[i];
             }
         }
     }

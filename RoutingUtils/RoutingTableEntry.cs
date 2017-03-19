@@ -1,8 +1,8 @@
 namespace CoreDht
 {
-    public class FingerTableEntry
+    public class RoutingTableEntry
     {
-        public FingerTableEntry(ConsistentHash startValue, NodeInfo successorIdentity)
+        public RoutingTableEntry(ConsistentHash startValue, NodeInfo successorIdentity)
         {
             StartValue = startValue;
             SuccessorIdentity = successorIdentity;

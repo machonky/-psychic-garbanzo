@@ -11,7 +11,7 @@ namespace CoreDht
         public INodeSocketFactory NodeSocketFactory { get; set; }
         public IClock Clock { get; set; }
         public ICorrelationFactory<Guid> CorrelationFactory { get; set; }
-        public int SuccessorTableLength { get; set; }
+        public int SuccessorCount { get; set; }
         public string SeedNode { get; set; }
     }
 }

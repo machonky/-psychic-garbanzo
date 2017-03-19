@@ -3,15 +3,17 @@ using CoreMemoryBus.Messages;
 
 namespace CoreDht
 {
-    public class GetSuccessorTable : NodeMessage, ICorrelatedMessage<Guid>
+    public class GetSuccessor : NodeMessage, ICorrelatedMessage<Guid>
     {
         public Guid CorrelationId { get; }
+        public int SuccessorIndex { get; set; }
         public NodeInfo ForNode { get; }
 
-        public GetSuccessorTable(NodeInfo recipient, NodeInfo forNode, Guid correlationId) : base(recipient)
+        public GetSuccessor(NodeInfo recipient, NodeInfo forNode, Guid correlationId, int successorIndex) : base(recipient)
         {
             ForNode = forNode;
             CorrelationId = correlationId;
+            SuccessorIndex = successorIndex;
         }
 
         public class Await : AwaitMessage
@@ -23,10 +25,14 @@ namespace CoreDht
         public class Reply : NodeReply, ICorrelatedMessage<Guid>
         {
             public Guid CorrelationId { get; }
+            public NodeInfo Successor { get; }
+            public int SuccessorIndex { get; }
 
-            public Reply(NodeInfo sender, Guid correlationId) : base(sender)
+            public Reply(NodeInfo sender, Guid correlationId, NodeInfo successor, int successorIndex) : base(sender)
             {
                 CorrelationId = correlationId;
+                SuccessorIndex = successorIndex;
+                Successor = successor;
             }
         }
     }

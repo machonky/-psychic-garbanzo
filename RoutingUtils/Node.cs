@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using CoreMemoryBus;
 using CoreMemoryBus.Messages;
 using CoreMemoryBus.Messaging;
 using NetMQ;
@@ -13,19 +12,20 @@ namespace CoreDht
     public partial class Node : IPublisher<RoutableMessage>, IDisposable, IOutgoingSocket
     {
         protected string SeedNode { get; }
+        private int SuccessorCount { get; }
         protected MemoryBus MessageBus { get; }
         protected DisposableStack Janitor { get; }
         protected NetMQActor Actor { get; }
-        private IMessageSerializer Serializer { get; }
+        protected IMessageSerializer Serializer { get; }
         private PairSocket Shim;
         private NetMQPoller Poller { get; }
-        private NodeMarshaller Marshaller { get; }
+        protected NodeMarshaller Marshaller { get; }
         private FingerTable FingerTable { get; }
         private SuccessorTable SuccessorTable { get; }
         private INodeSocketFactory SocketFactory { get; }
-        private IConsistentHashingService HashingService { get; }
-        public IClock Clock { get; }
-        public ICorrelationFactory<Guid> CorrelationFactory { get; }
+        protected IConsistentHashingService HashingService { get; }
+        protected IClock Clock { get; }
+        protected ICorrelationFactory<Guid> CorrelationFactory { get; }
         private SocketCache ForwardingSockets { get; }
         private DealerSocket ListeningSocket { get; }
         public NetMQTimer InitTimer { get; set; }
@@ -33,6 +33,7 @@ namespace CoreDht
         protected Node(NodeInfo identity, NodeConfiguration config)
         {
             SeedNode = config.SeedNode;
+            SuccessorCount = config.SuccessorCount;
             Serializer = config.Serializer;
             Marshaller = new NodeMarshaller(Serializer, config.HashingService);
             MessageBus = new MemoryBus();
@@ -57,14 +58,13 @@ namespace CoreDht
                 Publish(new NodeReady(Identity.RoutingHash));
             };
             FingerTable = new FingerTable(Identity, Identity.RoutingHash.BitCount);
-            SuccessorTable = new SuccessorTable(Identity, config.SuccessorTableLength);
+            SuccessorTable = new SuccessorTable(Identity, config.SuccessorCount);
         }
-
-
+        
         private void InitHandlers()
         {
             MessageBus.Subscribe(new NodeHandler(this));
-            MessageBus.Subscribe(new AwaitMessageHandler());
+            MessageBus.Subscribe(new AwaitMessageHandler(this));
         }
 
         private NetMQTimer CreateInitTimer()
@@ -135,23 +135,32 @@ namespace CoreDht
                         UnmarshalRoutableMsg(mqMsg);
                         break;
                     case NodeMarshaller.NodeMessage:
-                        UnMarshallNode(mqMsg);
+                        UnMarshallNodeMsg(mqMsg);
                         break;
                     case NodeMarshaller.NodeReply:
-                        UnMarshallReply(mqMsg);
+                        UnMarshallReplyMsg(mqMsg);
+                        break;
+                    case NodeMarshaller.InternalMessage: // This must come last
+                        UnMarshallMessage(mqMsg);
                         break;
                 }
             }
-            Thread.Sleep(0);
         }
 
-        private void UnMarshallReply(NetMQMessage mqMsg)
+        private void UnMarshallMessage(NetMQMessage mqMsg)
+        {
+            Message msg;
+            Marshaller.Unmarshall(mqMsg, out msg);
+            MessageBus.Publish(msg);
+        }
+
+        private void UnMarshallReplyMsg(NetMQMessage mqMsg)
         {
             NodeReply msg;
             Marshaller.Unmarshall(mqMsg, out msg);
             MessageBus.Publish(msg);
         }
-        private void UnMarshallNode(NetMQMessage mqMsg)
+        private void UnMarshallNodeMsg(NetMQMessage mqMsg)
         {
             NodeMessage msg;
             Marshaller.Unmarshall(mqMsg, out msg);
@@ -261,19 +270,6 @@ namespace CoreDht
         public override string ToString()
         {
             return Identity.ToString();
-        }
-
-        private void SendReply(NodeInfo target, NodeReply reply)
-        {
-            if (target.Equals(Identity))
-            {
-                MessageBus.Publish(reply);
-            }
-            else
-            {
-                var forwardingSocket = ForwardingSockets[target.HostAndPort];
-                Marshaller.Send(reply, forwardingSocket);
-            }
         }
 
         private void CloseHandler(Guid handlerCorrelation)

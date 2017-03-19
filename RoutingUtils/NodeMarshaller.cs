@@ -1,3 +1,4 @@
+using CoreMemoryBus.Messages;
 using NetMQ;
 using NetworkRouting;
 using Routing;
@@ -12,6 +13,7 @@ namespace CoreDht
         public const string NodeMessage = "NM";
         public const string NodeReply = "NR";
         public const string RoutableMessage = "RM";
+        public const string InternalMessage = "IM";
 
         public NodeMarshaller(IMessageSerializer serializer, IConsistentHashingService hashingService)
         {
@@ -61,6 +63,18 @@ namespace CoreDht
 
             return result;
         }
+        public NetMQMessage Marshall(Message msg)
+        {
+            var json = _serializer.Serialize(msg);
+            var result = new NetMQMessage(new[]
+            {
+                new NetMQFrame(InternalMessage),
+                new NetMQFrame(EmptyByteArray),
+                new NetMQFrame(json),
+            });
+
+            return result;
+        }
 
         public void Send(RoutableMessage msg, IOutgoingSocket outgoingSocket)
         {
@@ -75,6 +89,12 @@ namespace CoreDht
         }
 
         public void Send(NodeReply msg, IOutgoingSocket outgoingSocket)
+        {
+            var mqMsg = Marshall(msg);
+            outgoingSocket.SendMultipartMessage(mqMsg);
+        }
+
+        public void Send(Message msg, IOutgoingSocket outgoingSocket)
         {
             var mqMsg = Marshall(msg);
             outgoingSocket.SendMultipartMessage(mqMsg);
@@ -95,6 +115,11 @@ namespace CoreDht
         public void Unmarshall(NetMQMessage netMqMessage, out NodeReply msg)
         {
             msg = (NodeReply)_serializer.Deserialize(json: netMqMessage[2].ConvertToString());
+        }
+
+        public void Unmarshall(NetMQMessage netMqMessage, out Message msg)
+        {
+            msg = (Message)_serializer.Deserialize(json: netMqMessage[2].ConvertToString());
         }
     }
 }

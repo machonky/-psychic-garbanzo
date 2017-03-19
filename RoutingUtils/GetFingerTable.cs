@@ -14,21 +14,15 @@ namespace CoreDht
             CorrelationId = correlationId;
         }
 
-        public class Await : AwaitMessage
-        {
-            public Await(Guid correlationId) : base(correlationId)
-            { }
-        }
-
         public class Reply : NodeReply, ICorrelatedMessage<Guid>
         {
             public Guid CorrelationId { get; }
-            public FingerTableEntry[] FingerTableEntries { get; }
+            public RoutingTableEntry[] RoutingTableEntries { get; }
 
-            public Reply(NodeInfo sender, Guid correlationId, FingerTableEntry[] fingerTableEntries) : base(sender)
+            public Reply(NodeInfo sender, Guid correlationId, RoutingTableEntry[] routingTableEntries) : base(sender)
             {
                 CorrelationId = correlationId;
-                FingerTableEntries = fingerTableEntries;
+                RoutingTableEntries = routingTableEntries;
             }
         }
     }

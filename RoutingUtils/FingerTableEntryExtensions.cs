@@ -5,7 +5,7 @@ namespace CoreDht
 {
     static class FingerTableEntryExtensions
     {
-        public static NodeInfo[] DistinctNodes(this IEnumerable<FingerTableEntry> entries)
+        public static NodeInfo[] DistinctNodes(this IEnumerable<RoutingTableEntry> entries)
         {
             var result = new SortedSet<NodeInfo>();
             foreach (var entry in entries)
