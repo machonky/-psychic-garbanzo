@@ -1,4 +1,5 @@
 ﻿using System;
+using CoreDht.Utils;
 using CoreMemoryBus;
 using CoreMemoryBus.Messaging;
 
@@ -18,8 +19,6 @@ namespace CoreDht
                 var responder = new RequestResponseHandler<Guid>(Node.MessageBus);
                 Subscribe(responder);
 
-                // if this node is the initiator...use the same correlation on different nodes
-                // ensure we await all responses from all successors
                 var remainingResponses = new Reference<int>(Node.SuccessorCount);
 
 
@@ -29,7 +28,7 @@ namespace CoreDht
                     var nextSuccessorIndex = message.SuccessorIndex - 1;
 
                     // Forward to the next successor
-                    var forwardMsg = new GetSuccessor(message.Recipient, message.ForNode, GetNextCorrelation(), nextSuccessorIndex);
+                    var forwardMsg = new GetSuccessor(message.Identity, message.ForNode, GetNextCorrelation(), nextSuccessorIndex);
                     ForwardMessageTo(Node.Successor, forwardMsg); // trap a potential loop
                 }
 

@@ -35,19 +35,19 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="CoreMemoryBus, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CoreMemoryBus.1.0.6.290\lib\net452\CoreMemoryBus.dll</HintPath>
+      <HintPath>..\packages\CoreMemoryBus.1.0.7.292\lib\net452\CoreMemoryBus.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="CoreMemoryBus.Messages, Version=1.0.6.290, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CoreMemoryBus.Messages.1.0.6.290\lib\net452\CoreMemoryBus.Messages.dll</HintPath>
+    <Reference Include="CoreMemoryBus.Messages, Version=1.0.7.292, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CoreMemoryBus.Messages.1.0.7.292\lib\net452\CoreMemoryBus.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="NetMQ, Version=4.0.0.1, Culture=neutral, PublicKeyToken=a6decef4ddc58b3a, processorArchitecture=MSIL">
       <HintPath>..\packages\NetMQ.4.0.0.1\lib\net40\NetMQ.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -62,23 +62,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AwaitMessage.cs" />
-    <Compile Include="AwaitMessageHandler.cs" />
-    <Compile Include="CancelOperation.cs" />
-    <Compile Include="Clock.cs" />
-    <Compile Include="ConsistentHash.cs" />
-    <Compile Include="ConsistentHashingService.cs" />
     <Compile Include="DealerSocketWrapper.cs" />
-    <Compile Include="DisposableStack.cs" />
-    <Compile Include="DnsProvider.cs" />
-    <Compile Include="FindSuccessor.cs" />
-    <Compile Include="FindSuccessorToHash.cs" />
+    <Compile Include="Messages\AwaitMessage.cs" />
+    <Compile Include="AwaitMessageHandler.cs" />
+    <Compile Include="Messages\CancelOperation.cs" />
+    <Compile Include="Messages\FindSuccessor.cs" />
+    <Compile Include="Messages\FindSuccessorToHash.cs" />
     <Compile Include="FingerTable.cs" />
     <Compile Include="FingerTableEntryExtensions.cs" />
-    <Compile Include="GetFingerTable.cs" />
-    <Compile Include="GetSuccessor.cs" />
-    <Compile Include="GuidCorrelationFactory.cs" />
-    <Compile Include="ICorrelationFactory.cs" />
+    <Compile Include="Messages\GetFingerTable.cs" />
+    <Compile Include="Messages\GetPredecessor.cs" />
+    <Compile Include="Messages\GetSuccessor.cs" />
     <Compile Include="Node.FindSuccessorToHashHandler.cs" />
     <Compile Include="Node.GetFingerTableHandler.cs" />
     <Compile Include="Node.GetSuccessorHandler.cs" />
@@ -87,48 +81,42 @@
     <Compile Include="Node.StateHandler.cs" />
     <Compile Include="Node.StateHandlerFactory.cs" />
     <Compile Include="NodeConfiguration.cs" />
-    <Compile Include="NodeMessage.cs" />
-    <Compile Include="Reference.cs" />
-    <Compile Include="RequestKeys.cs" />
+    <Compile Include="Messages\NodeMessage.cs" />
+    <Compile Include="Messages\NotifyPredecessor.cs" />
+    <Compile Include="Messages\RequestKeys.cs" />
     <Compile Include="RoutingTable.cs" />
+    <Compile Include="Messages\Stabilize.cs" />
     <Compile Include="SuccessorTable.cs" />
     <Compile Include="RoutingTableEntry.cs" />
-    <Compile Include="IClock.cs" />
-    <Compile Include="NodeInitialised.cs" />
-    <Compile Include="NodeReady.cs" />
-    <Compile Include="ObjectCache.cs" />
-    <Compile Include="ICloneable.cs" />
-    <Compile Include="IConsistentHashingService.cs" />
-    <Compile Include="IDnsProvider.cs" />
+    <Compile Include="Messages\NodeInitialised.cs" />
+    <Compile Include="Messages\NodeReady.cs" />
     <Compile Include="IMessageSerializer.cs" />
     <Compile Include="INodeFactory.cs" />
     <Compile Include="INodeSocketFactory.cs" />
     <Compile Include="InProcNodeSocketFactory.cs" />
-    <Compile Include="IPublisher.cs" />
-    <Compile Include="IRoutableMessage.cs" />
-    <Compile Include="JoinNetwork.cs" />
-    <Compile Include="Md5HashingService.cs" />
+    <Compile Include="Messages\JoinNetwork.cs" />
     <Compile Include="MessageSerializer.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="Node.NodeHandler.cs" />
     <Compile Include="NodeInfo.cs" />
-    <Compile Include="OperationComplete.cs" />
+    <Compile Include="Messages\OperationComplete.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RequestResponseHandler.cs" />
-    <Compile Include="RoutableMessage.cs" />
     <Compile Include="NodeMarshaller.cs" />
-    <Compile Include="RoutableRepository.cs" />
-    <Compile Include="Sha1HashingService.cs" />
-    <Compile Include="Sha256HashingService.cs" />
     <Compile Include="SocketCache.cs" />
     <Compile Include="TcpNodeSocketFactory.cs" />
-    <Compile Include="TerminateNode.cs" />
+    <Compile Include="Messages\TerminateNode.cs" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CoreDht.Utils\CoreDht.Utils.csproj">
+      <Project>{32fb8972-5e48-4719-89fe-65105b4cd847}</Project>
+      <Name>CoreDht.Utils</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

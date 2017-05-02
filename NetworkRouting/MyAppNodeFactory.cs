@@ -1,6 +1,8 @@
 ﻿using System;
 using CoreDht;
-using Routing;
+using CoreDht.Node;
+using CoreDht.Utils;
+using CoreDht.Utils.Hashing;
 
 namespace NetworkRouting
 {

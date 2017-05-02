@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9BD191ED-E293-4012-9FC5-035ADE4178D1}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CoreDht.Node</RootNamespace>
+    <AssemblyName>CoreDht.Node</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CoreMemoryBus, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CoreMemoryBus.1.0.7.292\lib\net452\CoreMemoryBus.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="CoreMemoryBus.Messages, Version=1.0.7.292, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CoreMemoryBus.Messages.1.0.7.292\lib\net452\CoreMemoryBus.Messages.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NetMQ, Version=4.0.0.1, Culture=neutral, PublicKeyToken=a6decef4ddc58b3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\NetMQ.4.0.0.1\lib\net40\NetMQ.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DealerSocketWrapper.cs" />
+    <Compile Include="FingerTable.cs" />
+    <Compile Include="Handlers\JoinNetworkHandler.cs" />
+    <Compile Include="IMessageSerializer.cs" />
+    <Compile Include="INodeFactory.cs" />
+    <Compile Include="INodeMarshaller.cs" />
+    <Compile Include="INodeMarshallerFactory.cs" />
+    <Compile Include="INodeSocketFactory.cs" />
+    <Compile Include="InProcNodeSocketFactory.cs" />
+    <Compile Include="MessageSerializer.cs" />
+    <Compile Include="Messages\AckMessage.cs" />
+    <Compile Include="Messages\Internal\CancelOperation.cs" />
+    <Compile Include="Messages\Internal\NodeInitialised.cs" />
+    <Compile Include="Messages\Internal\OperationComplete.cs" />
+    <Compile Include="Messages\Internal\TerminateNode.cs" />
+    <Compile Include="Messages\Internal\TimerFired.cs" />
+    <Compile Include="Messages\Internal\AwaitMessage.cs" />
+    <Compile Include="Messages\INodeMessage.cs" />
+    <Compile Include="Messages\NetworkMaintenance\GetRoutingTable.cs" />
+    <Compile Include="Messages\NetworkMaintenance\GetRoutingTableReply.cs" />
+    <Compile Include="Messages\NetworkMaintenance\GetSuccessor.cs" />
+    <Compile Include="Messages\NetworkMaintenance\GetSuccessorReply.cs" />
+    <Compile Include="Messages\NetworkMaintenance\GetSuccessorTableReply.cs" />
+    <Compile Include="Messages\NodeMessage.cs" />
+    <Compile Include="Messages\NetworkMaintenance\QueryJoinNetwork.cs" />
+    <Compile Include="Messages\NetworkMaintenance\QueryJoinNetworkReply.cs" />
+    <Compile Include="Node.NodeHandler.cs" />
+    <Compile Include="Node.cs" />
+    <Compile Include="NodeActionScheduler.cs" />
+    <Compile Include="AwaitAllResponsesHandler.cs" />
+    <Compile Include="NodeAwaitHandler.cs" />
+    <Compile Include="NodeAwaitResponseHandler.cs" />
+    <Compile Include="NodeConfiguration.cs" />
+    <Compile Include="NodeInfo.cs" />
+    <Compile Include="NodeMarshaller.cs" />
+    <Compile Include="NodeMarshallerFactory.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RoutingTable.cs" />
+    <Compile Include="RoutingTableEntry.cs" />
+    <Compile Include="SocketCache.cs" />
+    <Compile Include="SuccessorTable.cs" />
+    <Compile Include="TcpNodeSocketFactory.cs" />
+    <Compile Include="AwaitConfiguration.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Node.AwaitAckHandler.cs" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CoreDht.Utils\CoreDht.Utils.csproj">
+      <Project>{32fb8972-5e48-4719-89fe-65105b4cd847}</Project>
+      <Name>CoreDht.Utils</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,4 +1,5 @@
 ﻿using System;
+using CoreDht.Utils;
 using CoreMemoryBus;
 using CoreMemoryBus.Messaging;
 
@@ -14,7 +15,7 @@ namespace CoreDht
 
             public void Handle(GetFingerTable message)
             {
-                var bitCount = message.Recipient.RoutingHash.BitCount;
+                var bitCount = message.Identity.RoutingHash.BitCount;
                 var entries = FingerTable.CreateEntries(bitCount, message.ForNode.RoutingHash);
 
                 var responder = new RequestResponseHandler<Guid>(Node.MessageBus);
@@ -33,7 +34,7 @@ namespace CoreDht
                             if (replyCount == bitCount)
                             {
                                 var getFingerTableReply = new GetFingerTable.Reply(Node.Identity, message.CorrelationId,entries);
-                                CloseHandlerWithReply(getFingerTableReply, message.Recipient, responder);
+                                CloseHandlerWithReply(getFingerTableReply, message.Identity, responder);
                             }
                         });
                 }

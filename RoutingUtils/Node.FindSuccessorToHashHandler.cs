@@ -18,8 +18,8 @@ namespace CoreDht
             {
                 if (Node.IsInDomain(message.ToHash))
                 {
-                    var msg = new FindSuccessorToHash.Reply(message.Recipient, Node.Identity, message.CorrelationId);
-                    CloseHandlerWithReply(msg, message.Recipient);
+                    var msg = new FindSuccessorToHash.Reply(message.Identity, Node.Identity, message.CorrelationId);
+                    CloseHandlerWithReply(msg, message.Identity);
                 }
                 else
                 {
@@ -31,8 +31,8 @@ namespace CoreDht
                         (FindSuccessorToHash.Reply networkReply) =>
                         {
                             // Forward the reply to the original sender with the initial correlation.
-                            var msg = new FindSuccessorToHash.Reply(message.Recipient, networkReply.Successor, message.CorrelationId);
-                            CloseHandlerWithReply(msg, message.Recipient, responder);
+                            var msg = new FindSuccessorToHash.Reply(message.Identity, networkReply.Successor, message.CorrelationId);
+                            CloseHandlerWithReply(msg, message.Identity, responder);
                         });
 
                     // Forward a new query to another node and reply back to this node.

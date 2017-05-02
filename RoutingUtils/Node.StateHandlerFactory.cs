@@ -20,7 +20,7 @@ namespace CoreDht
                     typeof(FindSuccessorToHashHandler),
                     typeof(GetFingerTableHandler),
                     typeof(GetSuccessorHandler),
-                    typeof(RequestKeysHandler)
+                    typeof(RequestKeysHandler),
                 };
 
                 foreach (var handlerType in handlerTypes)

@@ -52,6 +52,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CoreDht.Utils\CoreDht.Utils.csproj">
+      <Project>{32fb8972-5e48-4719-89fe-65105b4cd847}</Project>
+      <Name>CoreDht.Utils</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RoutingUtils\RoutingUtils.csproj">
       <Project>{95D4E61F-D8EC-42DC-AAFF-B7E71A840925}</Project>
       <Name>RoutingUtils</Name>

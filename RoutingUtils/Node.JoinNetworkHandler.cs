@@ -22,28 +22,27 @@ namespace CoreDht
                 var responder = new RequestResponseHandler<Guid>(Node.MessageBus);
                 Node.MessageBus.Subscribe(responder);
 
-                var joinNetworkReply = new JoinNetwork.Reply(message.Recipient, message.CorrelationId);
-
+                var joinNetworkReply = new JoinNetwork.Reply(message.Identity, message.CorrelationId);
                 responder.Publish(
-                    new GetFingerTable(Node.Identity, message.Recipient, GetNextCorrelation()),
+                    new GetFingerTable(Node.Identity, message.Identity, GetNextCorrelation()),
                     (GetFingerTable.Reply reply) =>
                     {
                         joinNetworkReply.RoutingTableEntries = reply.RoutingTableEntries;
                         if (joinNetworkReply.IsReadyToTransmit)
                         {
-                            CloseHandlerWithReply(joinNetworkReply, joinNetworkReply.Sender, responder);
+                            CloseHandlerWithReply(joinNetworkReply, joinNetworkReply.Identity, responder);
                         }
                     });
 
                 // TODO: Multiple successors
                 //responder.Publish(
-                //    new GetSuccessor(Node.Identity, message.Recipient, GetNextCorrelation()),
+                //    new GetSuccessor(Node.Identity, message.Identity, GetNextCorrelation()),
                 //    (GetSuccessor.Reply reply) =>
                 //    {
                 //        joinNetworkReply.SuccessorList = reply.SuccessorList;
                 //        if (joinNetworkReply.IsReadyToTransmit)
                 //        {
-                //            CloseHandlerWithReply(joinNetworkReply, joinNetworkReply.Sender, responder);
+                //            CloseHandlerWithReply(joinNetworkReply, joinNetworkReply.Identity, responder);
                 //        }
                 //    });
 
@@ -53,13 +52,27 @@ namespace CoreDht
 
             public void Handle(JoinNetwork.Reply message)
             {
-                // Now we have the reply we begin the 3 step process to join the overlay network
-                // 1. Assign the successor
-                Node.Successor = message.RoutingTableEntries[0].SuccessorIdentity;
-                // 2.
+                //// Now we have the reply we begin the 3 step process to join the overlay network
+                //// 1. Assign the successor
+                //Node.Successor = message.RoutingTableEntries[0].SuccessorIdentity;
+                //// 2. Integrate the resulting routing table.
+                //for (int i = 0; i < message.RoutingTableEntries.Length; ++i)
+                //{
+                //    Node.FingerTable[i] = message.RoutingTableEntries[i];
+                //}
+                //// 3. Copy data to the new host
+                //var requestKeysCorrelation = GetNextCorrelation();
+                //SendLocalMessage(new RequestKeys.Await(requestKeysCorrelation));
+                //ForwardMessageTo(message.Identity, new RequestKeys(Node.Identity, requestKeysCorrelation, startAt, Node.Identity));
 
-                // 3. Copy data to the new host
-                
+                var successor = message.RoutingTableEntries[0].SuccessorIdentity;
+                Node.Successor = successor;
+                Node.Logger?.Invoke($"{Node.Identity} has acquired successor {successor}");
+
+                Node.FingerTable.Copy(message.RoutingTableEntries);
+                Node.Logger?.Invoke($"{Node.Identity} has acquired routing table. ");
+
+                SendLocalMessage(new Stabilize(Node.Identity));
             }
         }
     }

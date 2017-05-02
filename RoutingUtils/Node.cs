@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Runtime.Remoting.Channels;
 using System.Threading;
+using CoreDht.Utils;
+using CoreDht.Utils.Hashing;
+using CoreDht.Utils.Messages;
+using CoreMemoryBus.Logger;
 using CoreMemoryBus.Messages;
 using CoreMemoryBus.Messaging;
 using NetMQ;
@@ -28,15 +33,18 @@ namespace CoreDht
         protected ICorrelationFactory<Guid> CorrelationFactory { get; }
         private SocketCache ForwardingSockets { get; }
         private DealerSocket ListeningSocket { get; }
-        public NetMQTimer InitTimer { get; set; }
+        private NetMQTimer InitTimer { get; set; }
+        protected Action<string> Logger { get; }
+
 
         protected Node(NodeInfo identity, NodeConfiguration config)
         {
+            Logger = config.LoggerDelegate;
             SeedNode = config.SeedNode;
             SuccessorCount = config.SuccessorCount;
             Serializer = config.Serializer;
             Marshaller = new NodeMarshaller(Serializer, config.HashingService);
-            MessageBus = new MemoryBus();
+            MessageBus = new MemoryBus(); // We can change the publishing strategy factory so we can log everything...
             InitHandlers();
             Identity = identity;
             Successor = identity;
@@ -60,10 +68,13 @@ namespace CoreDht
             FingerTable = new FingerTable(Identity, Identity.RoutingHash.BitCount);
             SuccessorTable = new SuccessorTable(Identity, config.SuccessorCount);
         }
-        
+
         private void InitHandlers()
         {
             MessageBus.Subscribe(new NodeHandler(this));
+            MessageBus.Subscribe(new GetPredecessorHandler(this));
+            MessageBus.Subscribe(new StabilizeHandler(this));
+            MessageBus.Subscribe(new NotifyPredecessorHandler(this));
             MessageBus.Subscribe(new AwaitMessageHandler(this));
         }
 
@@ -140,7 +151,7 @@ namespace CoreDht
                     case NodeMarshaller.NodeReply:
                         UnMarshallReplyMsg(mqMsg);
                         break;
-                    case NodeMarshaller.InternalMessage: // This must come last
+                    case NodeMarshaller.InternalMessage:
                         UnMarshallMessage(mqMsg);
                         break;
                 }
@@ -212,9 +223,9 @@ namespace CoreDht
 
         public NodeInfo Identity { get; }
 
-        private NodeInfo Successor { get; set; }
+        public NodeInfo Successor { get; set; }
 
-        private NodeInfo Predecessor { get; set; }
+        public NodeInfo Predecessor { get; set; }
 
         public void Publish(RoutableMessage message)
         {
@@ -275,6 +286,37 @@ namespace CoreDht
         private void CloseHandler(Guid handlerCorrelation)
         {
             MessageBus.Publish(new OperationComplete(handlerCorrelation));
+        }
+
+        protected virtual RequestKeys.Reply CreateRequestKeysReply(RequestKeys message, Guid receiptCorrelation)
+        {
+            return new RequestKeys.Reply(message.Identity, message.CorrelationId, receiptCorrelation);
+        }
+
+        protected void SendReplyTo(NodeInfo target, NodeReply reply)
+        {
+            if (target.Equals(Identity))
+            {
+                MessageBus.Publish(reply);
+            }
+            else
+            {
+                var forwardingSocket = ForwardingSockets[target.HostAndPort];
+                Marshaller.Send(reply, forwardingSocket);
+            }
+        }
+
+        protected void ForwardMessageTo(NodeInfo target, NodeMessage msg)
+        {
+            if (target.Equals(Identity))
+            {
+                MessageBus.Publish(msg);
+            }
+            else
+            {
+                var forwardingSocket = ForwardingSockets[target.HostAndPort];
+                Marshaller.Send(msg, forwardingSocket);
+            }
         }
     }
 }

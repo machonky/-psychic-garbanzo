@@ -1,3 +1,6 @@
+using CoreDht.Utils;
+using CoreDht.Utils.Hashing;
+
 namespace CoreDht
 {
     public class SuccessorTable : RoutingTable

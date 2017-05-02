@@ -2,6 +2,8 @@
 using System.Numerics;
 using NUnit.Framework;
 using CoreDht;
+using CoreDht.Utils;
+using CoreDht.Utils.Hashing;
 using Routing;
 
 namespace Tests

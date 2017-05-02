@@ -1,4 +1,5 @@
 using System;
+using CoreDht.Utils;
 using NetMQ;
 using NetMQ.Sockets;
 

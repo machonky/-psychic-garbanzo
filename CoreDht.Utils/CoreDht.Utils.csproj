@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{32FB8972-5E48-4719-89FE-65105B4CD847}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CoreDht.Utils</RootNamespace>
+    <AssemblyName>CoreDht.Utils</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Base58Check, Version=0.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Base58Check.0.2.0\lib\Net40\Base58Check.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="CoreMemoryBus, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CoreMemoryBus.1.0.7.292\lib\net452\CoreMemoryBus.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="CoreMemoryBus.Messages, Version=1.0.7.292, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CoreMemoryBus.Messages.1.0.7.292\lib\net452\CoreMemoryBus.Messages.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ActionScheduler.cs" />
+    <Compile Include="ActionTimer.cs" />
+    <Compile Include="ActionTimerFactory.cs" />
+    <Compile Include="Clock.cs" />
+    <Compile Include="ExpiryTimeCalculator.cs" />
+    <Compile Include="Hashing\ConsistentHash.cs" />
+    <Compile Include="Hashing\ConsistentHashingService.cs" />
+    <Compile Include="DisposableAction.cs" />
+    <Compile Include="DisposableStack.cs" />
+    <Compile Include="DnsProvider.cs" />
+    <Compile Include="GuidCorrelationFactory.cs" />
+    <Compile Include="IActionScheduler.cs" />
+    <Compile Include="IActionSchedulerFactory.cs" />
+    <Compile Include="IActionTimer.cs" />
+    <Compile Include="IActionTimerFactory.cs" />
+    <Compile Include="IClock.cs" />
+    <Compile Include="Hashing\IConsistentHashingService.cs" />
+    <Compile Include="ICorrelationFactory.cs" />
+    <Compile Include="IDnsProvider.cs" />
+    <Compile Include="IExpiryTimeCalculator.cs" />
+    <Compile Include="IPublisher.cs" />
+    <Compile Include="IRandomNumberGenerator.cs" />
+    <Compile Include="IRoutableMessage.cs" />
+    <Compile Include="KeyValueDto.cs" />
+    <Compile Include="Hashing\Md5HashingService.cs" />
+    <Compile Include="ObjectCache.cs" />
+    <Compile Include="PairingHeap.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RandomNumberGenerator.cs" />
+    <Compile Include="Reference.cs" />
+    <Compile Include="Messages\RoutableMessage.cs" />
+    <Compile Include="RoutableRepository.cs" />
+    <Compile Include="Hashing\Sha1HashingService.cs" />
+    <Compile Include="Hashing\Sha256HashingService.cs" />
+    <Compile Include="CorrelationId.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,4 +1,6 @@
 ﻿using System;
+using CoreDht.Utils;
+using CoreDht.Utils.Hashing;
 
 namespace CoreDht
 {

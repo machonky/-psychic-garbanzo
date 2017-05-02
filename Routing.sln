@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoutingUtils", "RoutingUtil
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{4A8198EC-3CFD-4D1E-BC54-82B6FED1008D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreDht.Utils", "CoreDht.Utils\CoreDht.Utils.csproj", "{32FB8972-5E48-4719-89FE-65105B4CD847}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreDht.Node", "CoreDht.Node\CoreDht.Node.csproj", "{9BD191ED-E293-4012-9FC5-035ADE4178D1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{4A8198EC-3CFD-4D1E-BC54-82B6FED1008D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4A8198EC-3CFD-4D1E-BC54-82B6FED1008D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4A8198EC-3CFD-4D1E-BC54-82B6FED1008D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32FB8972-5E48-4719-89FE-65105B4CD847}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32FB8972-5E48-4719-89FE-65105B4CD847}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32FB8972-5E48-4719-89FE-65105B4CD847}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32FB8972-5E48-4719-89FE-65105B4CD847}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BD191ED-E293-4012-9FC5-035ADE4178D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BD191ED-E293-4012-9FC5-035ADE4178D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BD191ED-E293-4012-9FC5-035ADE4178D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BD191ED-E293-4012-9FC5-035ADE4178D1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

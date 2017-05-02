@@ -1,3 +1,6 @@
+using CoreDht.Utils;
+using CoreDht.Utils.Hashing;
+using CoreDht.Utils.Messages;
 using CoreMemoryBus.Messages;
 using NetMQ;
 using NetworkRouting;

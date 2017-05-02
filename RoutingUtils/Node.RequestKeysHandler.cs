@@ -17,13 +17,16 @@ namespace CoreDht
 
             public void Handle(RequestKeys message)
             {
-                // A recipient of this message is to create a reply 
+                // The recipient supplies the keys to be relocated via the reply message
+                var receiptCorrelation = GetNextCorrelation();
+                //SendLocalMessage(new RequestKeys.Await(receiptCorrelation));
+
+                var mainReply = Node.CreateRequestKeysReply(message, receiptCorrelation);
+                SendReplyTo(message.Identity, mainReply);
             }
 
             public void Handle(RequestKeys.Await message)
-            {
-                // A sender of a RequestKeys message is awaits the reply
-            }
+            {}
 
             public void Handle(RequestKeys.Reply message)
             {
