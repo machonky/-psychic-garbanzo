@@ -31,7 +31,7 @@ namespace CoreDht.Utils
         #region Contructors
 
         /// <summary>
-        /// Creates a CorrelationId from a base64 encoded string
+        /// Creates a CorrelationId from a base58 encoded string
         /// </summary>
         /// <param name="value">The encoded guid as a 
         /// base64 string</param>
@@ -92,7 +92,7 @@ namespace CoreDht.Utils
         #region ToString
 
         /// <summary>
-        /// Returns the base64 encoded guid as a string
+        /// Returns the base58 encoded guid as a string
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -178,7 +178,7 @@ namespace CoreDht.Utils
         #region Decode
 
         /// <summary>
-        /// Decodes the given base64 string
+        /// Decodes the given base58 string
         /// </summary>
         /// <param name="value">The base64 encoded string of a Guid</param>
         /// <returns>A new Guid</returns>
@@ -240,7 +240,7 @@ namespace CoreDht.Utils
         /// <summary>
         /// Implicitly converts the string to a CorrelationId
         /// </summary>
-        /// <param name="shortGuid"></param>
+        /// <param name="correlationId"></param>
         /// <returns></returns>
         public static implicit operator CorrelationId(string correlationId)
         {

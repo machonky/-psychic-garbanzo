@@ -11,13 +11,13 @@ namespace CoreDht
     /// </summary>
     public class DealerSocketWrapper : IDisposable, IOutgoingSocket
     {
-        private readonly IClock _clock;
+        private readonly IUtcClock _clock;
         public DealerSocket Socket { get; }
         public bool Error { get; private set; }
 
         public DateTime LastTransmission { get; private set; }
 
-        public DealerSocketWrapper(DealerSocket socket, IClock clock)
+        public DealerSocketWrapper(DealerSocket socket, IUtcClock clock)
         {
             _clock = clock;
             Socket = socket;
@@ -29,7 +29,7 @@ namespace CoreDht
             {
                 // If we record the time, we can potentially exclude this socket from a heartbeat 
                 // if it took part in a recent transmission to save bandwidth
-                LastTransmission = _clock.UtcNow; 
+                LastTransmission = _clock.Now; 
                 return Socket.TrySend(ref msg, timeout, more);
             }
             catch (Exception e) // Change this to specific type

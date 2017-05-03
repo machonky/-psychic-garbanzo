@@ -4,9 +4,9 @@ namespace CoreDht.Utils
 {
     public class ExpiryTimeCalculator : IExpiryTimeCalculator
     {
-        private readonly IClock _clock;
+        private readonly IUtcClock _clock;
 
-        public ExpiryTimeCalculator(IClock clock)
+        public ExpiryTimeCalculator(IUtcClock clock)
         {
             _clock = clock;
         }

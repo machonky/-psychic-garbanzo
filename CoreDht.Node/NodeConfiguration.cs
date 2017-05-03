@@ -9,7 +9,7 @@ namespace CoreDht.Node
         public IConsistentHashingService HashingService { get; set; }
         public IMessageSerializer Serializer { get; set; }
         public INodeSocketFactory NodeSocketFactory { get; set; }
-        public IClock Clock { get; set; }
+        public IUtcClock Clock { get; set; }
         public ICorrelationFactory<CorrelationId> CorrelationFactory { get; set; }
         public IRandomNumberGenerator Random { get; set; }
         public IActionTimerFactory ActionTimerFactory { get; set; }

@@ -18,7 +18,7 @@ namespace CoreDht.Node
         public NodeConfiguration Config { get; }
         public NodeInfo Successor { get; private set; }
         public NodeInfo Predecessor { get; private set; }
-        protected IClock Clock { get; }
+        protected IUtcClock Clock { get; }
         protected MemoryBus MessageBus { get; }
         protected DisposableStack Janitor { get; }
         private NetMQPoller Poller { get; }
@@ -47,13 +47,15 @@ namespace CoreDht.Node
             Logger = Config.LoggerDelegate;
             Marshaller = Config.MarshallerFactory.Create();
 
-            ForwardingSockets = Janitor.Push(new SocketCache(Config.NodeSocketFactory, Clock));
             ExpiryCalculator = Config.ExpiryCalculator;
 
             Log($"Binding to {Config.NodeSocketFactory.BindingConnectionString(Identity.HostAndPort)}");
             ListeningSocket = Janitor.Push(Config.NodeSocketFactory.CreateBindingSocket(Identity.HostAndPort));
 
+            ForwardingSockets = Janitor.Push(new SocketCache(Config.NodeSocketFactory, Clock)); // Chicken and egg scenario where we require an actor!
+
             Actor = Janitor.Push(CreateActor());
+            ForwardingSockets.AddActor(Identity.HostAndPort, Actor);
             Janitor.Push(new DisposableAction(() => { Poller.Remove(ListeningSocket); }));
 
             Janitor.Push(new DisposableAction(

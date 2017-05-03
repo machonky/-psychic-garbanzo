@@ -50,7 +50,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DealerSocketWrapper.cs" />
+    <Compile Include="OutgoingSocketWrapper.cs" />
     <Compile Include="FingerTable.cs" />
     <Compile Include="Handlers\JoinNetworkHandler.cs" />
     <Compile Include="IMessageSerializer.cs" />

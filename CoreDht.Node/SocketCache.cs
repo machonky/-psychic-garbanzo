@@ -1,18 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using CoreDht.Utils;
+using NetMQ;
 
 namespace CoreDht.Node
 {
-    public class SocketCache : ObjectCache<string, DealerSocketWrapper>, IDisposable
+    public class SocketCache : ObjectCache<string, OutgoingSocketWrapper>, IDisposable
     {
-        public SocketCache(INodeSocketFactory socketFactory, IClock clock) : 
-            base(key => new DealerSocketWrapper(socketFactory.CreateForwardingSocket(key), clock))
-        {}
+        private readonly IUtcClock _clock;
+
+        public SocketCache(INodeSocketFactory socketFactory, IUtcClock clock) :
+            base(key => new OutgoingSocketWrapper(socketFactory.CreateForwardingSocket(key), clock))
+        {
+            _clock = clock;
+        }
 
         public override void Remove(string key)
         {
-            DealerSocketWrapper socket;
+            OutgoingSocketWrapper socket;
             if (Cache.TryGetValue(key, out socket))
             {
                 socket.Dispose();
@@ -36,21 +41,32 @@ namespace CoreDht.Node
 
         #region IDisposable Support
 
-        private bool isDisposed = false;
+        private bool _isDisposed = false;
 
         public void Dispose()
         {
-            if (!isDisposed)
+            if (!_isDisposed)
             {
                 foreach (var socket in Cache.Values)
                 {
                     socket.Dispose();    
                 }
 
-                isDisposed = true;
+                _isDisposed = true;
             }
         }
 
         #endregion
+
+        /// <summary>
+        /// This function is added so local calls can be treated the same as foreign calls
+        /// </summary>
+        /// <param name="hostAndPort">local identity host and port</param>
+        /// <param name="actor">The actor socket instance for the host</param>
+        /// 
+        public void AddActor(string hostAndPort, NetMQActor actor)
+        {
+            this.Cache.Add(hostAndPort, new OutgoingSocketWrapper(actor, _clock));
+        }
     }
 }

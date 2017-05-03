@@ -15,7 +15,7 @@ namespace CoreDht.Node
         private readonly INodeMarshaller _marshaller;
         private readonly IOutgoingSocket _actorSocket;
 
-        public NodeActionScheduler(IClock clock, IActionTimer timer, INodeMarshaller marshaller, IOutgoingSocket actorSocket) 
+        public NodeActionScheduler(IUtcClock clock, IActionTimer timer, INodeMarshaller marshaller, IOutgoingSocket actorSocket) 
             : base(clock, timer, LockingStrategy.None)
         {
             _marshaller = marshaller;

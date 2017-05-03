@@ -8,7 +8,7 @@ namespace CoreDht
 {
     public class SocketCache : ObjectCache<string, DealerSocketWrapper>, IDisposable
     {
-        public SocketCache(INodeSocketFactory socketFactory, IClock clock) : 
+        public SocketCache(INodeSocketFactory socketFactory, IUtcClock clock) : 
             base(key => new DealerSocketWrapper(socketFactory.CreateForwardingSocket(key), clock))
         {}
 

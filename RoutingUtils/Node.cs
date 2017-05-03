@@ -29,7 +29,7 @@ namespace CoreDht
         private SuccessorTable SuccessorTable { get; }
         private INodeSocketFactory SocketFactory { get; }
         protected IConsistentHashingService HashingService { get; }
-        protected IClock Clock { get; }
+        protected IUtcClock Clock { get; }
         protected ICorrelationFactory<Guid> CorrelationFactory { get; }
         private SocketCache ForwardingSockets { get; }
         private DealerSocket ListeningSocket { get; }

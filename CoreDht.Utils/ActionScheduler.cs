@@ -9,7 +9,7 @@ namespace CoreDht.Utils
     /// </summary>
     public class ActionScheduler : IActionScheduler, IDisposable
     {
-        protected IClock Clock { get; }
+        protected IUtcClock Clock { get; }
         private readonly IActionTimer _timer;
         private readonly LockingStrategy _lockingStrategy;
         private readonly PairingHeap<ScheduledAction> _actions = new PairingHeap<ScheduledAction>((x, y) => x.DueTime < y.DueTime);
@@ -76,7 +76,7 @@ namespace CoreDht.Utils
             Default,
         }
 
-        public ActionScheduler(IClock clock, IActionTimer timer, LockingStrategy lockingStrategy)
+        public ActionScheduler(IUtcClock clock, IActionTimer timer, LockingStrategy lockingStrategy)
         {
             Clock = clock;
             _timer = timer;

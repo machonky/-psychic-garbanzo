@@ -72,7 +72,7 @@ namespace NetworkRouting
         private readonly IMessageSerializer _msgSerializer;
         private readonly IDnsProvider _dnsProvider;
         private readonly INodeSocketFactory _nodeSocketFactory;
-        private readonly IClock _clock;
+        private readonly IUtcClock _clock;
         private readonly ICorrelationFactory<CorrelationId> _correlationFactory;
         private readonly IActionTimerFactory _actionTimerFactory;
         private readonly IExpiryTimeCalculator _expiryCalculator;
@@ -82,7 +82,7 @@ namespace NetworkRouting
 
         Program()
         {
-            _clock = new Clock();
+            _clock = new UtcClock();
             _dnsProvider = new DnsProvider();
             _hashingService = new Md5HashingService();
             _msgSerializer = new MessageSerializer();

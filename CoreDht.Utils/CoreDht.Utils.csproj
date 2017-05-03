@@ -49,7 +49,7 @@
     <Compile Include="ActionScheduler.cs" />
     <Compile Include="ActionTimer.cs" />
     <Compile Include="ActionTimerFactory.cs" />
-    <Compile Include="Clock.cs" />
+    <Compile Include="UtcClock.cs" />
     <Compile Include="ExpiryTimeCalculator.cs" />
     <Compile Include="Hashing\ConsistentHash.cs" />
     <Compile Include="Hashing\ConsistentHashingService.cs" />
@@ -61,7 +61,7 @@
     <Compile Include="IActionSchedulerFactory.cs" />
     <Compile Include="IActionTimer.cs" />
     <Compile Include="IActionTimerFactory.cs" />
-    <Compile Include="IClock.cs" />
+    <Compile Include="IUtcClock.cs" />
     <Compile Include="Hashing\IConsistentHashingService.cs" />
     <Compile Include="ICorrelationFactory.cs" />
     <Compile Include="IDnsProvider.cs" />

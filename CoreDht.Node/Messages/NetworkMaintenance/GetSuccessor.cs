@@ -13,5 +13,7 @@ namespace CoreDht.Node.Messages.NetworkMaintenance
         public CorrelationId CorrelationId { get; }
 
         public int SuccessorIndex { get; set; }
+        public NodeInfo Applicant { get; set; }
+        public int HopCount { get; set; }
     }
 }

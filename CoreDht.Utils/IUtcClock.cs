@@ -2,9 +2,8 @@ using System;
 
 namespace CoreDht.Utils
 {
-    public interface IClock
+    public interface IUtcClock
     {
         DateTime Now { get; }
-        DateTime UtcNow { get; }
     }
 }

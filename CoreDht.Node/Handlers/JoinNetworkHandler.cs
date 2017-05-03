@@ -18,7 +18,6 @@ namespace CoreDht.Node
             {
                 _node = node;
                 GetNextCorrelation = _node.Config.CorrelationFactory.GetNextCorrelation;
-
             }
 
             public void Handle(QueryJoinNetwork message)
@@ -65,46 +64,60 @@ namespace CoreDht.Node
                 return opIds;
             }
 
-            private void GetSuccessorTable(CorrelationId operationId, NodeInfo @from)
+            private void GetSuccessorTable(CorrelationId operationId, NodeInfo applicantInfo)
             {
                 var operationCount = _node.Config.SuccessorCount;
-                var reply = new GetSuccessorTableReply(_node.Identity, @from, operationId)
+                var reply = new GetSuccessorTableReply(_node.Identity, applicantInfo, operationId)
                 {
                     SuccessorTable = new RoutingTableEntry[operationCount]
                 };
 
                 var opIds = GetOperationIds(operationCount);
                 var multiReplyHandler = _node.CreateAwaitAllResponsesHandler();
-                multiReplyHandler.PerformAction(() =>
-                {
-                    // send a single message which clones as it travels
-                })
-                .AndAwaitAll(opIds, (GetSuccessorReply successorReply) =>
-                {
-                    reply.SuccessorTable[successorReply.SuccessorIndex] =
-                        new RoutingTableEntry(successorReply.Successor.RoutingHash, successorReply.Successor);
-                })
-                .ContinueWith(() =>
-                {
-                    //send reply
-                })
-                .Run(operationId);
-
-                //if (_node.IsInDomain(applicantInfo.RoutingHash))
-                //{
-                //    // this node is the successor + (r-1) of this nodes successor list.
-                //}
-                //else // Ask the network
-                //{
-                //    var closestNode = _node.FingerTable.FindClosestPrecedingFinger(applicantInfo.RoutingHash);
-                //    var closestSocket = _node.ForwardingSockets[closestNode.HostAndPort];
-                //    _node.Marshaller.Send(msg, closestSocket);
-                //}
+                multiReplyHandler
+                    .PerformAction(() =>
+                    {
+                        for (int i = 0; i < operationCount; ++i)
+                        {
+                            var opId = opIds[i];
+                            var getSuccessor = new GetSuccessor(_node.Identity, _node.Identity, opId)
+                            {
+                                Applicant = applicantInfo,
+                                HopCount = i,
+                            };
+                        }
+                    })
+                    .AndAwaitAll(opIds, (GetSuccessorReply successorReply) =>
+                    {
+                        reply.SuccessorTable[successorReply.SuccessorIndex] =
+                            new RoutingTableEntry(successorReply.Successor.RoutingHash, successorReply.Successor);
+                    })
+                    .ContinueWith(() =>
+                    {
+                        _node.Marshaller.Send(reply, _node.Actor);
+                    })
+                    .Run(operationId);
             }
 
             public void Handle(GetSuccessor message)
             {
-
+                var applicant = message.Applicant;
+                if (_node.IsInDomain(applicant.RoutingHash))
+                {
+                    // this node is the successor + (r-1) of this nodes successor list.
+                    var reply = new GetSuccessorReply(_node.Identity, message.From, message.CorrelationId)
+                    {
+                        Successor = _node.Identity,
+                        SuccessorIndex = message.HopCount,
+                    };
+                    // Send the reply
+                }
+                else // Ask the network
+                {
+                    var closestNode = _node.FingerTable.FindClosestPrecedingFinger(applicant.RoutingHash);
+                    var closestSocket = _node.ForwardingSockets[closestNode.HostAndPort];
+                    _node.Marshaller.Send(msg, closestSocket);
+                }
             }
 
             private void GetRoutingTable(CorrelationId operationId, NodeInfo applicantInfo)
