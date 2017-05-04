@@ -11,6 +11,6 @@ namespace CoreDht.Node.Messages
         }
 
         public NodeInfo From { get; }
-        public NodeInfo To { get; }
+        public NodeInfo To { get; set; }
     }
 }

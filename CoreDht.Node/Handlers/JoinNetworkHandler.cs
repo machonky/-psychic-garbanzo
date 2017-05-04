@@ -9,7 +9,7 @@ namespace CoreDht.Node
     {
         public class JoinNetworkHandler
             : IHandle<QueryJoinNetwork>
-            , IHandle<GetSuccessor>
+            , IHandle<GetSuccessorTable>
         {
             private readonly Node _node;
             private Func<CorrelationId> GetNextCorrelation { get; }
@@ -66,57 +66,80 @@ namespace CoreDht.Node
 
             private void GetSuccessorTable(CorrelationId operationId, NodeInfo applicantInfo)
             {
-                var operationCount = _node.Config.SuccessorCount;
                 var reply = new GetSuccessorTableReply(_node.Identity, applicantInfo, operationId)
                 {
-                    SuccessorTable = new RoutingTableEntry[operationCount]
+                    SuccessorTable = new RoutingTableEntry[_node.Config.SuccessorCount]
                 };
 
-                var opIds = GetOperationIds(operationCount);
                 var multiReplyHandler = _node.CreateAwaitAllResponsesHandler();
                 multiReplyHandler
                     .PerformAction(() =>
                     {
-                        for (int i = 0; i < operationCount; ++i)
+                        var thisNode = _node.Identity;
+                        var initialMessage = new GetSuccessorTable(thisNode, thisNode, operationId)
                         {
-                            var opId = opIds[i];
-                            var getSuccessor = new GetSuccessor(_node.Identity, _node.Identity, opId)
-                            {
-                                Applicant = applicantInfo,
-                                HopCount = i,
-                            };
-                        }
+                            Applicant = applicantInfo,
+                            SuccessorTable = new RoutingTableEntry[_node.Config.SuccessorCount],
+                            HopCount = 0,
+                        };
+
+                        var outgoingSocket = _node.ForwardingSockets[thisNode.HostAndPort];
+                        _node.Marshaller.Send(initialMessage, outgoingSocket);
                     })
-                    .AndAwaitAll(opIds, (GetSuccessorReply successorReply) =>
+                    .AndAwait(operationId, (GetSuccessorTableReply successorReply) =>
                     {
-                        reply.SuccessorTable[successorReply.SuccessorIndex] =
-                            new RoutingTableEntry(successorReply.Successor.RoutingHash, successorReply.Successor);
+                        reply.SuccessorTable = successorReply.SuccessorTable;
                     })
                     .ContinueWith(() =>
                     {
+                        // Merge the result back with the parent query
                         _node.Marshaller.Send(reply, _node.Actor);
                     })
                     .Run(operationId);
             }
 
-            public void Handle(GetSuccessor message)
+            public void Handle(GetSuccessorTable message)
             {
+                _node.SendAckMessage(message, message.CorrelationId);
+
                 var applicant = message.Applicant;
                 if (_node.IsInDomain(applicant.RoutingHash))
                 {
-                    // this node is the successor + (r-1) of this nodes successor list.
-                    var reply = new GetSuccessorReply(_node.Identity, message.From, message.CorrelationId)
+                    var nextSuccessor = _node.Successor;
+                    message.SuccessorTable[message.HopCount] = new RoutingTableEntry(nextSuccessor.RoutingHash, nextSuccessor);
+
+                    var hopMax = _node.Config.SuccessorCount - 1;
+                    if (message.HopCount < hopMax)
                     {
-                        Successor = _node.Identity,
-                        SuccessorIndex = message.HopCount,
-                    };
-                    // Send the reply
+                        _node.Log($"Successor({message.HopCount}) found. Forwarding to {nextSuccessor}");
+
+                        var forwardMsg = message;
+                        forwardMsg.To = nextSuccessor;
+                        forwardMsg.HopCount++;
+                        forwardMsg.Applicant = nextSuccessor; // we need to now follow a chain of successors
+
+                        var successorSocket = _node.ForwardingSockets[nextSuccessor.HostAndPort];
+                        _node.Marshaller.Send(forwardMsg, successorSocket);
+                    }
+                    else
+                    {
+                        // we've collected all the successors. Now send them home
+                        var returnAddress = message.From;
+                        _node.Log($"Successor({message.HopCount}) found. Reply to {returnAddress}");
+                        var reply = new GetSuccessorTableReply(_node.Identity, returnAddress, message.CorrelationId)
+                        {
+                            SuccessorTable = message.SuccessorTable,
+                        };
+                        var returnSocket = _node.ForwardingSockets[returnAddress.HostAndPort];
+                        _node.Marshaller.Send(reply, returnSocket);
+                    }
                 }
                 else // Ask the network
                 {
                     var closestNode = _node.FingerTable.FindClosestPrecedingFinger(applicant.RoutingHash);
+                    message.To = closestNode;
                     var closestSocket = _node.ForwardingSockets[closestNode.HostAndPort];
-                    _node.Marshaller.Send(msg, closestSocket);
+                    _node.Marshaller.Send(message, closestSocket);
                 }
             }
 
@@ -124,7 +147,6 @@ namespace CoreDht.Node
             {
                 
             }
-
         }
     }
 }

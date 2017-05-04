@@ -125,7 +125,7 @@ namespace CoreDht.Node
             return $"{hostNameOrAddress}:{port}";
         }
         
-        private void Log(string logMsg)
+        internal void Log(string logMsg)
         {
             Logger?.Invoke($"{Identity} {logMsg}");
         }
@@ -213,7 +213,7 @@ namespace CoreDht.Node
         {
             NodeMessage msg;
             Marshaller.Unmarshall(mqMsg, out msg);
-            MessageBus.Publish(msg);
+            MessageBus.Publish((Message)msg);
         }
 
         private void UnMarshallMessage(NetMQMessage mqMsg)

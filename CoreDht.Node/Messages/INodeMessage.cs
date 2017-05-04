@@ -7,6 +7,6 @@
     public interface INodeMessage
     {
         NodeInfo From { get; }
-        NodeInfo To { get; }
+        NodeInfo To { get; set; } // Message may be redirected between hopss
     }
 }
