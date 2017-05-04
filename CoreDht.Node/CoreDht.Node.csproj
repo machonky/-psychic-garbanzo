@@ -50,6 +50,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Messages\Internal\AwaitWithTimeoutMessage.cs" />
     <Compile Include="Messages\NetworkMaintenance\GetSuccessorTable.cs" />
     <Compile Include="OutgoingSocketWrapper.cs" />
     <Compile Include="FingerTable.cs" />

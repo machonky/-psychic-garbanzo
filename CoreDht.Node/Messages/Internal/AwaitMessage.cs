@@ -1,15 +1,16 @@
 ﻿using System;
+using CoreDht.Utils;
 using CoreMemoryBus.Messages;
 
 namespace CoreDht.Node.Messages
 {
-    public class AwaitMessage : Message, ICorrelatedMessage<Guid>
+    public class AwaitMessage : Message, ICorrelatedMessage<CorrelationId>
     {
-        public AwaitMessage(Guid correlationId)
+        public AwaitMessage(CorrelationId correlationId)
         {
             CorrelationId = correlationId;
         }
 
-        public Guid CorrelationId { get; }
+        public CorrelationId CorrelationId { get; }
     }
 }

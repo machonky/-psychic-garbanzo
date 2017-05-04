@@ -71,6 +71,8 @@ namespace CoreDht.Node
                     SuccessorTable = new RoutingTableEntry[_node.Config.SuccessorCount]
                 };
 
+                var timeout = _node.Config.SuccessorCount*_node.Config.AwaitTimeout;
+
                 var multiReplyHandler = _node.CreateAwaitAllResponsesHandler();
                 multiReplyHandler
                     .PerformAction(() =>
@@ -95,7 +97,7 @@ namespace CoreDht.Node
                         // Merge the result back with the parent query
                         _node.Marshaller.Send(reply, _node.Actor);
                     })
-                    .Run(operationId);
+                    .Run(operationId, timeout);
             }
 
             public void Handle(GetSuccessorTable message)

@@ -13,6 +13,7 @@ namespace CoreDht.Node
     {
         public class AwaitAckHandler : IDisposable
             , IHandle<AwaitMessage>
+            , IHandle<AwaitWithTimeoutMessage>
             , IHandle<AckMessage>
         {
             private readonly IActionScheduler _actionScheduler;
@@ -71,6 +72,24 @@ namespace CoreDht.Node
                     _marshaller.Send(new CancelOperation(correlation), _actorSocket);
                     _acks.Remove(correlation);
                 });
+
+                _logger?.Invoke($"{message.GetType().Name} Id:{message.CorrelationId} ({_config.AwaitTimeout} ms)");
+            }
+
+            public void Handle(AwaitWithTimeoutMessage message)
+            {
+                var correlation = message.CorrelationId;
+                var dueTime = _expiryCalculator.CalcExpiry(message.Timeout);
+
+                _actionScheduler.ScheduleAction(dueTime, new Context { CorrelationId = correlation },
+                cxt =>
+                {
+                    _marshaller.Send(new CancelOperation(correlation), _actorSocket);
+                    _acks.Remove(correlation);
+                });
+
+                _logger?.Invoke($"{message.GetType().Name} Id:{message.CorrelationId} ({message.Timeout} ms)");
+
             }
 
             public void Handle(AckMessage message)

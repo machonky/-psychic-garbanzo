@@ -70,6 +70,16 @@ namespace CoreDht.Node
             _initAction?.Invoke();
         }
 
+        public void Run(CorrelationId parentCorrelation, int timeoutMs)
+        {
+            _parentCorrelation = parentCorrelation;
+            Publisher.Publish(new AwaitWithTimeoutMessage(parentCorrelation) {Timeout = timeoutMs});
+
+            Subscriber.Subscribe(this);
+
+            _initAction?.Invoke();
+        }
+
         public void Handle(Message message)
         {
             if (message.GetType() != typeof(CancelOperation) ||
