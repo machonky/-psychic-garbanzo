@@ -20,7 +20,6 @@ namespace CoreDht.Node
         public string SeedNode { get; set; }
         public Action<string> LoggerDelegate { get; set; }
         public JoinConfiguration JoinSettings { get; }
-        public int AwaitTimeout { get; set; }
         public AwaitConfiguration AwaitSettings { get; }
 
         public NodeConfiguration()

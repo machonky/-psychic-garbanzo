@@ -22,7 +22,6 @@ namespace CoreDht.Utils
         #endregion
 
         #region Fields
-
         Guid _guid;
         string _value;
 
@@ -34,7 +33,8 @@ namespace CoreDht.Utils
         /// Creates a CorrelationId from a base58 encoded string
         /// </summary>
         /// <param name="value">The encoded guid as a 
-        /// base64 string</param>
+        /// base58 string</param>
+        /// 
         public CorrelationId(string value)
         {
             _value = value;
@@ -72,7 +72,7 @@ namespace CoreDht.Utils
         }
 
         /// <summary>
-        /// Gets/sets the underlying base64 encoded string
+        /// Gets/sets the underlying base58 encoded string
         /// </summary>
         public string Value
         {
@@ -170,7 +170,7 @@ namespace CoreDht.Utils
         /// <returns></returns>
         public static string Encode(Guid guid)
         {
-            return Base58Check.Base58CheckEncoding.EncodePlain(guid.ToByteArray());
+            return Base58Check.Base58CheckEncoding.Encode(guid.ToByteArray());
         }
 
         #endregion
@@ -180,11 +180,11 @@ namespace CoreDht.Utils
         /// <summary>
         /// Decodes the given base58 string
         /// </summary>
-        /// <param name="value">The base64 encoded string of a Guid</param>
+        /// <param name="value">The base58 encoded string of a Guid</param>
         /// <returns>A new Guid</returns>
         public static Guid Decode(string value)
         {
-            byte[] buffer = Base58Check.Base58CheckEncoding.DecodePlain(value);
+            byte[] buffer = Base58Check.Base58CheckEncoding.Decode(value);
             return new Guid(buffer);
         }
 

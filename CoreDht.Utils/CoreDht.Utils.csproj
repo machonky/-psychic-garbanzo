@@ -42,6 +42,10 @@
       <HintPath>..\packages\CoreMemoryBus.Messages.1.0.7.292\lib\net452\CoreMemoryBus.Messages.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
@@ -56,7 +60,7 @@
     <Compile Include="DisposableAction.cs" />
     <Compile Include="DisposableStack.cs" />
     <Compile Include="DnsProvider.cs" />
-    <Compile Include="GuidCorrelationFactory.cs" />
+    <Compile Include="CorrelationIdFactory.cs" />
     <Compile Include="IActionScheduler.cs" />
     <Compile Include="IActionSchedulerFactory.cs" />
     <Compile Include="IActionTimer.cs" />

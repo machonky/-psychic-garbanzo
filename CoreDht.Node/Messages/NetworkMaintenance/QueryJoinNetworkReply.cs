@@ -6,7 +6,7 @@ namespace CoreDht.Node.Messages.NetworkMaintenance
 {
     public class QueryJoinNetworkReply : NodeMessage, ICorrelatedMessage<CorrelationId>
     {
-        public QueryJoinNetworkReply(NodeInfo @from, NodeInfo to, Guid correlationId) : base(@from, to)
+        public QueryJoinNetworkReply(NodeInfo @from, NodeInfo to, CorrelationId correlationId) : base(@from, to)
         {
             CorrelationId = correlationId;
         }

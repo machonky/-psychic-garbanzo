@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using CoreDht;
 using CoreDht.Utils;
@@ -13,31 +14,34 @@ namespace NetworkRouting
     {
         void Run(string[] args)
         {
-            var hostEntry = _dnsProvider.GetHostEntry("localhost");
-            var config = new MyAppNodeConfiguration
-            {
-                HashingService = _hashingService,
-                Serializer = _msgSerializer,
-                NodeSocketFactory = _nodeSocketFactory,
-                Clock = _clock,
-                CorrelationFactory = _correlationFactory,
-                SuccessorCount = 3,
-                SeedNode = $"{hostEntry.HostName}:{SeedPort}",
-                LoggerDelegate = Console.WriteLine,
-                ExpiryCalculator = _expiryCalculator,
-                Random = _random,
-                ActionTimerFactory = _actionTimerFactory,
-                MarshallerFactory = _marshallerFactory,
-            };
-
-            var factory = new MyAppNodeFactory(config);
-
-            var hostAndPort0 = $"{hostEntry.HostName}:{SeedPort}";
-            var id0 = Node.CreateIdentifier(hostAndPort0);
-
-            var nodes = new List<Node>();
             using (var janitor = new DisposableStack())
             {
+                var logger = janitor.Push(new FileLogger());
+
+                var hostEntry = _dnsProvider.GetHostEntry("localhost");
+                var config = new MyAppNodeConfiguration
+                {
+                    HashingService = _hashingService,
+                    Serializer = _msgSerializer,
+                    NodeSocketFactory = _nodeSocketFactory,
+                    Clock = _clock,
+                    CorrelationFactory = _correlationFactory,
+                    SuccessorCount = 3,
+                    SeedNode = $"{hostEntry.HostName}:{SeedPort}",
+                    LoggerDelegate = logger.WriteLine,
+                    ExpiryCalculator = _expiryCalculator,
+                    Random = _random,
+                    ActionTimerFactory = _actionTimerFactory,
+                    MarshallerFactory = _marshallerFactory,
+                };
+
+                var factory = new MyAppNodeFactory(config);
+
+                var hostAndPort0 = $"{hostEntry.HostName}:{SeedPort}";
+                var id0 = Node.CreateIdentifier(hostAndPort0);
+
+                var nodes = new List<Node>();
+
                 nodes.Add(janitor.Push(factory.CreateNode(id0, hostAndPort0)));
 
                 for (int i = 9001; i < 9003; ++i)
@@ -87,7 +91,7 @@ namespace NetworkRouting
             _hashingService = new Md5HashingService();
             _msgSerializer = new MessageSerializer();
             _nodeSocketFactory = new InProcNodeSocketFactory();
-            _correlationFactory = new GuidCorrelationFactory();
+            _correlationFactory = new CorrelationIdFactory();
             _actionTimerFactory = new ActionTimerFactory();
             _expiryCalculator = new ExpiryTimeCalculator(_clock);
             _random = new RandomNumberGenerator(_correlationFactory);
@@ -99,6 +103,47 @@ namespace NetworkRouting
             var theApp = new Program();
             theApp.Run(args);
         }
+    }
+
+    public class FileLogger : IDisposable
+    {
+        public FileLogger()
+        {
+            _stream = File.Create("Output.txt");
+            _writer = new StreamWriter(_stream);
+        }
+
+        #region IDisposable Support
+
+        private bool disposedValue = false; // To detect redundant calls
+        private readonly FileStream _stream;
+        private readonly StreamWriter _writer;
+
+        public void WriteLine(string value)
+        {
+            _writer.WriteLine(value);
+            Console.WriteLine(value);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    _writer.Dispose();
+                    _stream.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        #endregion
     }
 }
 

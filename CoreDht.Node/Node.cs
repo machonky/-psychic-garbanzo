@@ -213,7 +213,7 @@ namespace CoreDht.Node
         {
             NodeMessage msg;
             Marshaller.Unmarshall(mqMsg, out msg);
-            MessageBus.Publish((Message)msg);
+            MessageBus.Publish(msg);
         }
 
         private void UnMarshallMessage(NetMQMessage mqMsg)

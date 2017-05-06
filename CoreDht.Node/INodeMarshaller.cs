@@ -4,20 +4,15 @@ using NetMQ;
 
 namespace CoreDht.Node
 {
-    public interface INodeMarshaller : IInternalMessageMarshaller, INodeMessageMarshaller
+    public interface INodeMarshaller 
+        : INodeMarshaller<Message>
+        , INodeMarshaller<NodeMessage>
     {}
 
-    public interface IInternalMessageMarshaller
+    public interface INodeMarshaller<T> where T:Message
     {
-        NetMQMessage Marshall(Message msg);
-        void Unmarshall(NetMQMessage mqMessage, out Message result);
-        void Send(Message msg, IOutgoingSocket actorSocket);
-    }
-
-    public interface INodeMessageMarshaller
-    {
-        NetMQMessage Marshall(NodeMessage msg);
-        void Unmarshall(NetMQMessage mqMessage, out NodeMessage result);
-        void Send(NodeMessage msg, IOutgoingSocket forwardingSocket);
+        NetMQMessage Marshall(T msg);
+        void Unmarshall(NetMQMessage mqMessage, out T result);
+        void Send(T msg, IOutgoingSocket forwardingSocket);
     }
 }

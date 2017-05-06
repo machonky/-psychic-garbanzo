@@ -32,7 +32,7 @@ namespace CoreDht.Node
 
         public void Unmarshall(NetMQMessage mqMessage, out Message result)
         {
-            result = _serializer.Deserialize(json: mqMessage[PayloadFrameIndex].ConvertToString());
+            result = _serializer.Deserialize<Message>(json: mqMessage[PayloadFrameIndex].ConvertToString());
         }
 
         public void Send(Message msg, IOutgoingSocket actorSocket)
@@ -55,7 +55,7 @@ namespace CoreDht.Node
 
         public void Unmarshall(NetMQMessage mqMessage, out NodeMessage result)
         {
-            result = (NodeMessage)_serializer.Deserialize(json: mqMessage[PayloadFrameIndex].ConvertToString());
+            result = _serializer.Deserialize<NodeMessage>(json: mqMessage[PayloadFrameIndex].ConvertToString());
         }
 
         public void Send(NodeMessage msg, IOutgoingSocket forwardingSocket)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using CoreDht.Node.Messages.NetworkMaintenance;
 using CoreDht.Utils;
 using CoreMemoryBus;
@@ -22,12 +23,16 @@ namespace CoreDht.Node
 
             public void Handle(QueryJoinNetwork message)
             {
+                _node.Log($"Received QueryJoinNetwork from {message.From}");
                 _node.SendAckMessage(message, message.CorrelationId);
 
                 var routingCorrelation = GetNextCorrelation();
                 var successorCorrelation = GetNextCorrelation();
 
-                var joinNetworkReply = new QueryJoinNetworkReply(_node.Identity, message.From, message.CorrelationId);
+                var joinNetworkReply = new QueryJoinNetworkReply(_node.Identity, message.From, message.CorrelationId)
+                {
+                    RoutingTable = new RoutingTableEntry[0],
+                };
 
                 var multiReplyHandler = _node.CreateAwaitAllResponsesHandler();
                 multiReplyHandler
@@ -41,11 +46,11 @@ namespace CoreDht.Node
                         _node.SendAckMessage(message, message.CorrelationId);
                         joinNetworkReply.SuccessorTable = successorTableReply.SuccessorTable;
                     })
-                    .AndAwait(routingCorrelation, (GetRoutingTableReply routingTableReply) =>
-                    {
-                        _node.SendAckMessage(message, message.CorrelationId);
-                        joinNetworkReply.RoutingTable = routingTableReply.RoutingTable;
-                    })
+                    //.AndAwait(routingCorrelation, (GetRoutingTableReply routingTableReply) =>
+                    //{
+                    //    _node.SendAckMessage(message, message.CorrelationId);
+                    //    joinNetworkReply.RoutingTable = routingTableReply.RoutingTable;
+                    //})
                     .ContinueWith(() =>
                     {
                         var replySocket = _node.ForwardingSockets[message.From.HostAndPort];
@@ -68,10 +73,12 @@ namespace CoreDht.Node
             {
                 var reply = new GetSuccessorTableReply(_node.Identity, applicantInfo, operationId)
                 {
-                    SuccessorTable = new RoutingTableEntry[_node.Config.SuccessorCount]
+                    SuccessorTable = new RoutingTableEntry[_node.Config.SuccessorCount],
                 };
 
-                var timeout = _node.Config.SuccessorCount*_node.Config.AwaitTimeout;
+                var timeout = _node.Config.AwaitSettings.AwaitTimeout == Timeout.Infinite
+                    ? Timeout.Infinite
+                    : _node.Config.SuccessorCount*_node.Config.AwaitSettings.AwaitTimeout;
 
                 var multiReplyHandler = _node.CreateAwaitAllResponsesHandler();
                 multiReplyHandler

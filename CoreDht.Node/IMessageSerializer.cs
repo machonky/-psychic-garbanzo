@@ -5,7 +5,7 @@ namespace CoreDht.Node
     public interface IMessageSerializer
     {
         string Serialize(Message message);
-        Message Deserialize(string json);
+        TMessage Deserialize<TMessage>(string json) where TMessage : Message;
     }
 
     public interface IMessageSerializer<T>

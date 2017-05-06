@@ -53,7 +53,7 @@ namespace CoreDht.Node
             if (message.CorrelationId.Equals(_correlationId))
             {
                 Subscriber.Unsubscribe(this);
-                Logger?.Invoke($"Cancel Operation {message.CorrelationId}");
+                Logger?.Invoke($"Cancel Operation Id:{message.CorrelationId}");
             }
         }
 
@@ -62,7 +62,7 @@ namespace CoreDht.Node
             if (message.CorrelationId.Equals(_correlationId))
             {
                 Subscriber.Unsubscribe(this);
-                Logger?.Invoke($"Operation Complete {message.CorrelationId}");
+                Logger?.Invoke($"Operation Complete Id:{message.CorrelationId}");
             }
         }
     }

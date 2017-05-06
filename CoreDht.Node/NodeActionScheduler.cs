@@ -1,4 +1,3 @@
-using CoreDht.Node.Messages;
 using CoreDht.Node.Messages.Internal;
 using CoreDht.Utils;
 using NetMQ;

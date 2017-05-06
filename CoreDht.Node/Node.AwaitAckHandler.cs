@@ -23,7 +23,7 @@ namespace CoreDht.Node
             private readonly Action<string> _logger;
             private readonly AwaitConfiguration _config;
 
-            private readonly Dictionary<Guid, DateTime> _acks = new Dictionary<Guid, DateTime>();
+            private readonly Dictionary<CorrelationId, DateTime> _acks = new Dictionary<CorrelationId, DateTime>();
 
             public AwaitAckHandler(IActionScheduler actionScheduler, IExpiryTimeCalculator expiryCalculator, INodeMarshaller marshaller, IOutgoingSocket actorSocket, Action<string> logger, AwaitConfiguration config)
             {
@@ -58,7 +58,7 @@ namespace CoreDht.Node
 
             private class Context
             {
-                public Guid CorrelationId { get; set; }
+                public CorrelationId CorrelationId { get; set; }
             }
 
             public void Handle(AwaitMessage message)
@@ -102,6 +102,7 @@ namespace CoreDht.Node
             }
 
             #region IDisposable Support
+
             private bool _isDisposed = false;
             private readonly DisposableAction _disposeAction;
 
@@ -113,6 +114,7 @@ namespace CoreDht.Node
                     _isDisposed = true;
                 }
             }
+
             #endregion
         }
     }

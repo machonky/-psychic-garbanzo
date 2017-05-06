@@ -3,7 +3,7 @@ using CoreDht.Utils;
 
 namespace CoreDht
 {
-    public class GuidCorrelationFactory : ICorrelationFactory<CorrelationId>
+    public class CorrelationIdFactory : ICorrelationFactory<CorrelationId>
     {
         public CorrelationId GetNextCorrelation()
         {

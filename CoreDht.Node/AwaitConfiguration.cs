@@ -1,8 +1,10 @@
+using System.Threading;
+
 namespace CoreDht.Node
 {
     public class AwaitConfiguration
     {
-        public const int AwaitDefault = 100;
+        public const int AwaitDefault = 200;
         public const int AckDefault = 50;
 
         public int InitTimeout { get; set; }

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreDht.Utils", "CoreDht.Ut
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreDht.Node", "CoreDht.Node\CoreDht.Node.csproj", "{9BD191ED-E293-4012-9FC5-035ADE4178D1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreDht.Utils.Test", "CoreDht.Utils.Test\CoreDht.Utils.Test.csproj", "{168601C6-223F-4907-8129-280D23EA354B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{9BD191ED-E293-4012-9FC5-035ADE4178D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9BD191ED-E293-4012-9FC5-035ADE4178D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9BD191ED-E293-4012-9FC5-035ADE4178D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{168601C6-223F-4907-8129-280D23EA354B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{168601C6-223F-4907-8129-280D23EA354B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{168601C6-223F-4907-8129-280D23EA354B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{168601C6-223F-4907-8129-280D23EA354B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
