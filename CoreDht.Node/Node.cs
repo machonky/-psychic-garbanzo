@@ -103,13 +103,16 @@ namespace CoreDht.Node
             AwaitResponseToAction(correlation, () =>
             {
                 Log($"QueryJoinNetwork: Querying {seedNodeInfo} Id:{correlation}");
-                var msg = new QueryJoinNetwork(Identity, seedNodeInfo, correlation);
+                var msg = new QueryJoinNetwork(Identity, seedNodeInfo, correlation)
+                {
+                    RoutingTable = this.FingerTable.Entries,
+                };
                 var socket = ForwardingSockets[seedNode];
                 Marshaller.Send(msg, socket);
             },
             (QueryJoinNetworkReply reply) =>
             {
-                Log($"QueryJoinNetworkReply: Reply from {reply.From} CorrelationId {reply.CorrelationId}");
+                Log($"QueryJoinNetworkReply: Reply from {reply.From} Id:{reply.CorrelationId}");
                 Log($"Join took {(Clock.Now-startTime).Milliseconds} ms");
             });
         }
@@ -249,8 +252,7 @@ namespace CoreDht.Node
             var replySocket = ForwardingSockets[message.From.HostAndPort];
             Marshaller.Send(new AckMessage(correlationId), replySocket);
         }
-
-
+        
         #region IDisposable Support
 
         private bool _isDisposed = false; // To detect redundant calls

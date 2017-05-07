@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using CoreDht.Node.Messages;
 using CoreDht.Node.Messages.Internal;
 using CoreDht.Utils;
@@ -12,7 +11,7 @@ using CoreMemoryBus.Messaging;
 namespace CoreDht.Node
 {
     public class AwaitAllResponsesHandler 
-        : NodeAwaitHandler
+        : AwaitHandler
         , IHandle<Message>
         , IHandle<CancelOperation>
         , IHandle<OperationComplete>

@@ -4,13 +4,16 @@ using CoreMemoryBus.Messaging;
 
 namespace CoreDht.Node
 {
-    public class NodeAwaitHandler
+    /// <summary>
+    /// This class provides basic common implementations. Really for framework authors, not application developers
+    /// </summary>
+    public class AwaitHandler
     {
         protected readonly IPublisher Publisher;
         protected readonly ISubscriber Subscriber;
         protected readonly Action<string> Logger;
 
-        protected NodeAwaitHandler(IPublisher publisher, ISubscriber subscriber, Action<string> logger)
+        protected AwaitHandler(IPublisher publisher, ISubscriber subscriber, Action<string> logger)
         {
             Publisher = publisher;
             Subscriber = subscriber;

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading;
+using System.Linq;
 using CoreDht.Node.Messages.NetworkMaintenance;
 using CoreDht.Utils;
 using CoreMemoryBus;
@@ -11,6 +11,7 @@ namespace CoreDht.Node
         public class JoinNetworkHandler
             : IHandle<QueryJoinNetwork>
             , IHandle<GetSuccessorTable>
+            , IHandle<GetRoutingEntry>
         {
             private readonly Node _node;
             private Func<CorrelationId> GetNextCorrelation { get; }
@@ -39,18 +40,18 @@ namespace CoreDht.Node
                     .PerformAction(() =>
                     {
                         GetSuccessorTable(successorCorrelation, message.From);
-                        GetRoutingTable(routingCorrelation, message.From);
+                        GetRoutingTable(routingCorrelation, message.From, message.RoutingTable);
                     })
                     .AndAwait(successorCorrelation, (GetSuccessorTableReply successorTableReply) =>
                     {
                         _node.SendAckMessage(message, message.CorrelationId);
                         joinNetworkReply.SuccessorTable = successorTableReply.SuccessorTable;
                     })
-                    //.AndAwait(routingCorrelation, (GetRoutingTableReply routingTableReply) =>
-                    //{
-                    //    _node.SendAckMessage(message, message.CorrelationId);
-                    //    joinNetworkReply.RoutingTable = routingTableReply.RoutingTable;
-                    //})
+                    .AndAwait(routingCorrelation, (GetRoutingTableReply routingTableReply) =>
+                    {
+                        _node.SendAckMessage(message, message.CorrelationId);
+                        joinNetworkReply.RoutingTable = routingTableReply.RoutingTable;
+                    })
                     .ContinueWith(() =>
                     {
                         var replySocket = _node.ForwardingSockets[message.From.HostAndPort];
@@ -59,26 +60,14 @@ namespace CoreDht.Node
                     .Run(message.CorrelationId);
             }
 
-            private CorrelationId[] GetOperationIds(int operationCount)
-            {
-                var opIds = new CorrelationId[operationCount];
-                for (int i = 0; i < operationCount; ++i)
-                {
-                    opIds[i] = GetNextCorrelation();
-                }
-                return opIds;
-            }
-
             private void GetSuccessorTable(CorrelationId operationId, NodeInfo applicantInfo)
             {
-                var reply = new GetSuccessorTableReply(_node.Identity, applicantInfo, operationId)
+                var assembledReply = new GetSuccessorTableReply(_node.Identity, applicantInfo, operationId)
                 {
                     SuccessorTable = new RoutingTableEntry[_node.Config.SuccessorCount],
                 };
 
-                var timeout = _node.Config.AwaitSettings.AwaitTimeout == Timeout.Infinite
-                    ? Timeout.Infinite
-                    : _node.Config.SuccessorCount*_node.Config.AwaitSettings.AwaitTimeout;
+                var totalTimeout = _node.Config.SuccessorCount*_node.Config.AwaitSettings.NetworkQueryTimeout;
 
                 var multiReplyHandler = _node.CreateAwaitAllResponsesHandler();
                 multiReplyHandler
@@ -97,14 +86,14 @@ namespace CoreDht.Node
                     })
                     .AndAwait(operationId, (GetSuccessorTableReply successorReply) =>
                     {
-                        reply.SuccessorTable = successorReply.SuccessorTable;
+                        assembledReply.SuccessorTable = successorReply.SuccessorTable;
                     })
                     .ContinueWith(() =>
                     {
                         // Merge the result back with the parent query
-                        _node.Marshaller.Send(reply, _node.Actor);
+                        _node.Marshaller.Send(assembledReply, _node.Actor);
                     })
-                    .Run(operationId, timeout);
+                    .Run(operationId, totalTimeout);
             }
 
             public void Handle(GetSuccessorTable message)
@@ -147,14 +136,81 @@ namespace CoreDht.Node
                 {
                     var closestNode = _node.FingerTable.FindClosestPrecedingFinger(applicant.RoutingHash);
                     message.To = closestNode;
+
                     var closestSocket = _node.ForwardingSockets[closestNode.HostAndPort];
                     _node.Marshaller.Send(message, closestSocket);
                 }
             }
 
-            private void GetRoutingTable(CorrelationId operationId, NodeInfo applicantInfo)
+            private CorrelationId[] GetOperationIds(int operationCount)
             {
-                
+                var opIds = new CorrelationId[operationCount];
+                for (int i = 0; i < operationCount; ++i)
+                {
+                    opIds[i] = GetNextCorrelation();
+                }
+                return opIds;
+            }
+
+            private void GetRoutingTable(CorrelationId operationId, NodeInfo applicantInfo, RoutingTableEntry[] routingTable)
+            {
+                var totalTimeout = routingTable.Length*_node.Config.AwaitSettings.NetworkQueryTimeout;
+                var assembledReply = new GetRoutingTableReply(_node.Identity, applicantInfo, operationId)
+                {
+                    RoutingTable = routingTable,
+                };
+
+                var networkResults = routingTable.ToDictionary(x => x.StartValue);
+                var queryIds = GetOperationIds(routingTable.Length);
+                var identity = _node.Identity;
+
+                var multiReplyHandler = _node.CreateAwaitAllResponsesHandler();
+                multiReplyHandler
+                    .PerformAction(() =>
+                    {
+                        for (int i = 0; i < routingTable.Length; i++)
+                        {
+                            var entryQuery = new GetRoutingEntry(identity, identity, queryIds[i])
+                            {
+                                StartValue = routingTable[i].StartValue,
+                            };
+
+                            var socket = _node.ForwardingSockets[identity.HostAndPort];
+                            _node.Marshaller.Send(entryQuery, socket);
+                        }
+                    })
+                    .AndAwaitAll(queryIds, (GetRoutingEntryReply entryReply) =>
+                    {
+                        networkResults[entryReply.Entry.StartValue] = entryReply.Entry;
+                    })
+                    .ContinueWith(() =>
+                    {
+                        // scan the networkResults against the routing table start values
+                        _node.Marshaller.Send(assembledReply, _node.Actor);
+                    })
+                    .Run(operationId, totalTimeout);
+            }
+
+            public void Handle(GetRoutingEntry message)
+            {
+                _node.SendAckMessage(message, message.CorrelationId);
+
+                if (_node.IsInDomain(message.StartValue))
+                {
+                    var reply = new GetRoutingEntryReply(_node.Identity, message.From, message.CorrelationId)
+                    {
+                        Entry = new RoutingTableEntry(message.StartValue, _node.Successor),
+                    };
+
+                    var socket = _node.ForwardingSockets[_node.Identity.HostAndPort];
+                    _node.Marshaller.Send(reply, socket);
+                }
+                else
+                {
+                    var closestNode = _node.FingerTable.FindClosestPrecedingFinger(message.StartValue);
+                    var socket = _node.ForwardingSockets[closestNode.HostAndPort];
+                    _node.Marshaller.Send(message, socket);
+                }
             }
         }
     }

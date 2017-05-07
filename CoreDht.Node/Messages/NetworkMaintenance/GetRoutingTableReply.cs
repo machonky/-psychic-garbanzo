@@ -6,7 +6,7 @@ namespace CoreDht.Node.Messages.NetworkMaintenance
 {
     public class GetRoutingTableReply : NodeMessage, ICorrelatedMessage<CorrelationId>
     {
-        public GetRoutingTableReply(NodeInfo @from, NodeInfo to, Guid correlationId) : base(@from, to)
+        public GetRoutingTableReply(NodeInfo @from, NodeInfo to, CorrelationId correlationId) : base(@from, to)
         {
             CorrelationId = correlationId;
         }

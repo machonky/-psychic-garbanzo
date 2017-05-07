@@ -51,6 +51,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Messages\Internal\AwaitWithTimeoutMessage.cs" />
+    <Compile Include="Messages\NetworkMaintenance\GetRoutingEntry.cs" />
+    <Compile Include="Messages\NetworkMaintenance\GetRoutingEntryReply.cs" />
     <Compile Include="Messages\NetworkMaintenance\GetSuccessorTable.cs" />
     <Compile Include="OutgoingSocketWrapper.cs" />
     <Compile Include="FingerTable.cs" />
@@ -82,7 +84,7 @@
     <Compile Include="Node.cs" />
     <Compile Include="NodeActionScheduler.cs" />
     <Compile Include="AwaitAllResponsesHandler.cs" />
-    <Compile Include="NodeAwaitHandler.cs" />
+    <Compile Include="AwaitHandler.cs" />
     <Compile Include="NodeAwaitResponseHandler.cs" />
     <Compile Include="NodeConfiguration.cs" />
     <Compile Include="NodeInfo.cs" />

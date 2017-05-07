@@ -15,5 +15,7 @@ namespace CoreDht.Node.Messages.NetworkMaintenance
         }
 
         public CorrelationId CorrelationId { get; }
+
+        public RoutingTableEntry[] RoutingTable { get; set; }
     }
 }

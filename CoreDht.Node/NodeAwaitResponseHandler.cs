@@ -9,7 +9,7 @@ using CoreMemoryBus.Messaging;
 namespace CoreDht.Node
 {
     public class NodeAwaitResponseHandler 
-        : NodeAwaitHandler
+        : AwaitHandler
         , IHandle<Message>
         , IHandle<CancelOperation>
         , IHandle<OperationComplete>
