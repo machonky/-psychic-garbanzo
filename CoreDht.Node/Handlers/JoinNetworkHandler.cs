@@ -30,10 +30,7 @@ namespace CoreDht.Node
                 var routingCorrelation = GetNextCorrelation();
                 var successorCorrelation = GetNextCorrelation();
 
-                var joinNetworkReply = new QueryJoinNetworkReply(_node.Identity, message.From, message.CorrelationId)
-                {
-                    RoutingTable = new RoutingTableEntry[0],
-                };
+                var joinNetworkReply = new QueryJoinNetworkReply(_node.Identity, message.From, message.CorrelationId);
 
                 var multiReplyHandler = _node.CreateAwaitAllResponsesHandler();
                 multiReplyHandler
@@ -185,7 +182,14 @@ namespace CoreDht.Node
                     })
                     .ContinueWith(() =>
                     {
-                        // scan the networkResults against the routing table start values
+                        var replyTable = assembledReply.RoutingTable;
+                        var tableLength = replyTable.Length;
+
+                        for (int i = 0; i < tableLength; ++i)
+                        {
+                            var startValue = replyTable[i].StartValue;
+                            replyTable[i] = networkResults[startValue];
+                        }
                         _node.Marshaller.Send(assembledReply, _node.Actor);
                     })
                     .Run(operationId, totalTimeout);

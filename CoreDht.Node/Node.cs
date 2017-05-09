@@ -16,7 +16,6 @@ namespace CoreDht.Node
     {
         public NodeInfo Identity { get; }
         public NodeConfiguration Config { get; }
-        public NodeInfo Successor { get; private set; }
         public NodeInfo Predecessor { get; private set; }
         protected IUtcClock Clock { get; }
         protected MemoryBus MessageBus { get; }
@@ -33,11 +32,12 @@ namespace CoreDht.Node
         private IExpiryTimeCalculator ExpiryCalculator { get; }
         private INodeMarshaller Marshaller { get; }
 
+        public NodeInfo Successor => SuccessorTable[0].SuccessorIdentity;
+
         protected Node(NodeInfo identity, NodeConfiguration config)
         {
             Identity = identity;
             Config = config;
-            Successor = Identity;
             Predecessor = null;
 
             Clock = Config.Clock;
@@ -96,25 +96,36 @@ namespace CoreDht.Node
         {
             var seedNode = Config.SeedNode;
             Log("Beginning Join");
-            var correlation = Config.CorrelationFactory.GetNextCorrelation();
+
+            var opId = Config.CorrelationFactory.GetNextCorrelation();
             var seedNodeInfo = CalcNodeInfo(seedNode);
 
             var startTime = Clock.Now;
-            AwaitResponseToAction(correlation, () =>
-            {
-                Log($"QueryJoinNetwork: Querying {seedNodeInfo} Id:{correlation}");
-                var msg = new QueryJoinNetwork(Identity, seedNodeInfo, correlation)
+
+            var responseHandler = CreateAwaitAllResponsesHandler();
+            responseHandler
+                .PerformAction(() =>
                 {
-                    RoutingTable = this.FingerTable.Entries,
-                };
-                var socket = ForwardingSockets[seedNode];
-                Marshaller.Send(msg, socket);
-            },
-            (QueryJoinNetworkReply reply) =>
-            {
-                Log($"QueryJoinNetworkReply: Reply from {reply.From} Id:{reply.CorrelationId}");
-                Log($"Join took {(Clock.Now-startTime).Milliseconds} ms");
-            });
+                    Log($"QueryJoinNetwork: Querying {seedNodeInfo} Id:{opId}");
+                    var msg = new QueryJoinNetwork(Identity, seedNodeInfo, opId)
+                    {
+                        RoutingTable = this.FingerTable.Entries,
+                    };
+                    var socket = ForwardingSockets[seedNode];
+                    Marshaller.Send(msg, socket);
+                })
+                .AndAwait(opId, (QueryJoinNetworkReply reply) =>
+                {
+                    Log($"QueryJoinNetworkReply: Reply from {reply.From} Id:{reply.CorrelationId}");
+                    Log($"Join took {(Clock.Now - startTime).Milliseconds} ms");
+
+                    Log($"Assigning successor {reply.SuccessorTable[0].SuccessorIdentity}");
+
+                    SuccessorTable.Copy(reply.SuccessorTable);
+                    FingerTable.Copy(reply.RoutingTable);
+                })
+                .ContinueWith(() => {})
+                .Run(opId);
         }
 
         public static string CreateIdentifier(string hostAndPort, int vNodeIndex = -1)
@@ -131,14 +142,6 @@ namespace CoreDht.Node
         internal void Log(string logMsg)
         {
             Logger?.Invoke($"{Identity} {logMsg}");
-        }
-
-        private void AwaitResponseToAction<TResponse>(CorrelationId correlation, Action action, Action<TResponse> responseAction)
-            where TResponse:Message, ICorrelatedMessage<CorrelationId>
-        {
-            var newResponseHandler = new NodeAwaitResponseHandler(MessageBus, MessageBus, Log);
-            newResponseHandler.Await<TResponse>(correlation, responseAction);
-            action();
         }
 
         internal AwaitAllResponsesHandler CreateAwaitAllResponsesHandler()
