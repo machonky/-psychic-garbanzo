@@ -109,7 +109,7 @@ namespace NetworkRouting
     {
         public FileLogger()
         {
-            _stream = File.Create("Output.txt");
+            _stream = new FileStream("output.txt",FileMode.Create, FileAccess.ReadWrite);
             _writer = new StreamWriter(_stream);
         }
 
