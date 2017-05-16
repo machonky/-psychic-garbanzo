@@ -1,8 +1,7 @@
-﻿using System;
-using CoreDht.Utils;
+﻿using CoreDht.Utils;
 using CoreMemoryBus.Messages;
 
-namespace CoreDht.Node.Messages
+namespace CoreDht.Node.Messages.Internal
 {
     public class AwaitMessage : Message, ICorrelatedMessage<CorrelationId>
     {

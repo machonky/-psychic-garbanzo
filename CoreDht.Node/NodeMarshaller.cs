@@ -7,7 +7,7 @@ namespace CoreDht.Node
     public class NodeMarshaller : INodeMarshaller
     {
         public const string InternalMessage = "IM";
-        public const string NodeMessage = "NM";
+        public const string PointToPointMessage = "PP";
 
         private const int PayloadFrameIndex = 1;
 
@@ -41,24 +41,24 @@ namespace CoreDht.Node
             actorSocket.SendMultipartMessage(mqMsg);
         }
 
-        public NetMQMessage Marshall(NodeMessage msg)
+        public NetMQMessage Marshall(PointToPointMessage msg)
         {
             var json = _serializer.Serialize(msg);
             var result = new NetMQMessage(new[]
             {
-                new NetMQFrame(NodeMessage),
+                new NetMQFrame(PointToPointMessage),
                 new NetMQFrame(json),
             });
 
             return result;
         }
 
-        public void Unmarshall(NetMQMessage mqMessage, out NodeMessage result)
+        public void Unmarshall(NetMQMessage mqMessage, out PointToPointMessage result)
         {
-            result = _serializer.Deserialize<NodeMessage>(json: mqMessage[PayloadFrameIndex].ConvertToString());
+            result = _serializer.Deserialize<PointToPointMessage>(json: mqMessage[PayloadFrameIndex].ConvertToString());
         }
 
-        public void Send(NodeMessage msg, IOutgoingSocket forwardingSocket)
+        public void Send(PointToPointMessage msg, IOutgoingSocket forwardingSocket)
         {
             var mqMsg = Marshall(msg);
             forwardingSocket.SendMultipartMessage(mqMsg);

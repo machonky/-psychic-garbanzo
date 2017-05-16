@@ -9,7 +9,7 @@ namespace CoreDht.Node
     /// This wrapper records if there were errors when attempting to send, 
     /// so we don't need to test the socket by sending again.
     /// </summary>
-    public class OutgoingSocketWrapper : IDisposable, IOutgoingSocket
+    public class OutgoingSocket : IDisposable, IOutgoingSocket
     {
         private readonly IUtcClock _clock;
         public IOutgoingSocket Socket { get; }
@@ -17,12 +17,13 @@ namespace CoreDht.Node
 
         public DateTime LastTransmission { get; private set; }
 
-        public OutgoingSocketWrapper(DealerSocket socket, IUtcClock clock)
+        public OutgoingSocket(DealerSocket socket, IUtcClock clock)
         {
             _clock = clock;
             Socket = socket;
         }
-        public OutgoingSocketWrapper(NetMQActor socket, IUtcClock clock)
+
+        public OutgoingSocket(NetMQActor socket, IUtcClock clock)
         {
             _clock = clock;
             Socket = socket;
@@ -41,7 +42,7 @@ namespace CoreDht.Node
             catch (Exception e) // Change this to specific type
             {
                 Error = true;
-                throw e;
+                throw e; // Instead of throwing we can publish the error - but to which handler? Msg might have an answer, but we should not want to keep the reference if we want to pool the messages.
             }
         }
 

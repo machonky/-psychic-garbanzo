@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using CoreDht.Node.Messages.Internal;
 using CoreDht.Node.Messages.NetworkMaintenance;
 using CoreDht.Utils;
 using CoreMemoryBus;
@@ -9,7 +10,8 @@ namespace CoreDht.Node
     partial class Node
     {
         public class JoinNetworkHandler
-            : IHandle<QueryJoinNetwork>
+            : IHandle<InitJoin>
+            , IHandle<JoinNetwork>
             , IHandle<GetSuccessorTable>
             , IHandle<GetRoutingEntry>
         {
@@ -22,15 +24,61 @@ namespace CoreDht.Node
                 GetNextCorrelation = _node.Config.CorrelationFactory.GetNextCorrelation;
             }
 
-            public void Handle(QueryJoinNetwork message)
+            public void Handle(InitJoin message)
             {
-                _node.Log($"Received QueryJoinNetwork from {message.From}");
+                _node.Predecessor = _node.Identity;
+                _node.FingerTable.Init();
+
+                var seedNode = _node.Config.SeedNode;
+                _node.Log("Beginning Join");
+
+                var opId = _node.Config.CorrelationFactory.GetNextCorrelation();
+                var seedNodeInfo = _node.CalcNodeInfo(seedNode);
+
+                var startTime = _node.Clock.Now;
+
+                // this needs to be on a retry mechanism
+
+                var responseHandler = _node.CreateAwaitAllResponsesHandler();
+                responseHandler
+                    .PerformAction(() =>
+                    {
+                        _node.Log($"JoinNetwork: Querying {seedNodeInfo} Id:{opId}");
+                        var msg = new JoinNetwork(_node.Identity, seedNodeInfo, opId)
+                        {
+                            RoutingTable = _node.FingerTable.Entries,
+                        };
+                        var socket = _node.ForwardingSockets[seedNode];
+                        _node.Marshaller.Send(msg, socket);
+                    })
+                    .AndAwait(opId, (JoinNetworkReply reply) =>
+                    {
+                        _node.Log($"JoinNetworkReply: Reply from {reply.From} Id:{reply.CorrelationId}");
+                        _node.Log($"Join took {(_node.Clock.Now - startTime).Milliseconds} ms");
+
+                        _node.Log($"Assigning successor {reply.SuccessorTable[0].SuccessorIdentity}");
+
+                        _node.SuccessorTable.Copy(reply.SuccessorTable);
+                        _node.FingerTable.Copy(reply.RoutingTable);
+
+                    // This node has "joined" but is not in an ideal state as it is not part of the ring network yet.
+                    })
+                    .ContinueWith(() =>
+                    {
+                        _node.InitStabilize();
+                    })
+                    .Run(opId);
+            }
+
+            public void Handle(JoinNetwork message)
+            {
+                _node.Log($"Received JoinNetwork from {message.From}");
                 _node.SendAckMessage(message, message.CorrelationId);
 
                 var routingCorrelation = GetNextCorrelation();
                 var successorCorrelation = GetNextCorrelation();
 
-                var joinNetworkReply = new QueryJoinNetworkReply(_node.Identity, message.From, message.CorrelationId);
+                var joinNetworkReply = new JoinNetworkReply(_node.Identity, message.From, message.CorrelationId);
 
                 var multiReplyHandler = _node.CreateAwaitAllResponsesHandler();
                 multiReplyHandler
@@ -100,12 +148,16 @@ namespace CoreDht.Node
                 var applicant = message.Applicant;
                 if (_node.IsInDomain(applicant.RoutingHash))
                 {
-                    var nextSuccessor = _node.Successor;
+                    // the predecessors successor table will become the applicant's if the applicant node
+                    // becomes the new predecessor. The head of the predecessors table is this node.
+
+                    var nextSuccessor = _node.Identity;
                     message.SuccessorTable[message.HopCount] = new RoutingTableEntry(nextSuccessor.RoutingHash, nextSuccessor);
 
                     var hopMax = _node.Config.SuccessorCount - 1;
                     if (message.HopCount < hopMax)
                     {
+                        nextSuccessor = _node.Successor;
                         _node.Log($"Successor({message.HopCount}) found. Forwarding to {nextSuccessor}");
 
                         var forwardMsg = message;

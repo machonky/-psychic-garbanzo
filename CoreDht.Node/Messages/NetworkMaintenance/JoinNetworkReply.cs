@@ -1,12 +1,11 @@
-using System;
 using CoreDht.Utils;
 using CoreMemoryBus.Messages;
 
 namespace CoreDht.Node.Messages.NetworkMaintenance
 {
-    public class QueryJoinNetworkReply : NodeMessage, ICorrelatedMessage<CorrelationId>
+    public class JoinNetworkReply : PointToPointMessage, ICorrelatedMessage<CorrelationId>
     {
-        public QueryJoinNetworkReply(NodeInfo @from, NodeInfo to, CorrelationId correlationId) : base(@from, to)
+        public JoinNetworkReply(NodeInfo @from, NodeInfo to, CorrelationId correlationId) : base(@from, to)
         {
             CorrelationId = correlationId;
         }

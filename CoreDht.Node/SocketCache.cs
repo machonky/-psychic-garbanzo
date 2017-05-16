@@ -5,19 +5,19 @@ using NetMQ;
 
 namespace CoreDht.Node
 {
-    public class SocketCache : ObjectCache<string, OutgoingSocketWrapper>, IDisposable
+    public class SocketCache : ObjectCache<string, OutgoingSocket>, ISocketCache, IDisposable
     {
         private readonly IUtcClock _clock;
 
         public SocketCache(INodeSocketFactory socketFactory, IUtcClock clock) :
-            base(key => new OutgoingSocketWrapper(socketFactory.CreateForwardingSocket(key), clock))
+            base(key => new OutgoingSocket(socketFactory.CreateForwardingSocket(key), clock))
         {
             _clock = clock;
         }
 
         public override void Remove(string key)
         {
-            OutgoingSocketWrapper socket;
+            OutgoingSocket socket;
             if (Cache.TryGetValue(key, out socket))
             {
                 socket.Dispose();
@@ -66,7 +66,7 @@ namespace CoreDht.Node
         /// 
         public void AddActor(string hostAndPort, NetMQActor actor)
         {
-            this.Cache.Add(hostAndPort, new OutgoingSocketWrapper(actor, _clock));
+            this.Cache.Add(hostAndPort, new OutgoingSocket(actor, _clock));
         }
     }
 }

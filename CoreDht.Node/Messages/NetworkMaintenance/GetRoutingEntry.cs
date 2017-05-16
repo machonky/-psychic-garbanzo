@@ -4,7 +4,7 @@ using CoreMemoryBus.Messages;
 
 namespace CoreDht.Node.Messages.NetworkMaintenance
 {
-    public class GetRoutingEntry : NodeMessage, ICorrelatedMessage<CorrelationId>
+    public class GetRoutingEntry : PointToPointMessage, ICorrelatedMessage<CorrelationId>
     {
         public GetRoutingEntry(NodeInfo @from, NodeInfo to, CorrelationId correlationId) : base(@from, to)
         {

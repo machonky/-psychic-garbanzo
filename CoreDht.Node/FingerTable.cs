@@ -9,6 +9,16 @@ namespace CoreDht.Node
         public FingerTable(NodeInfo identity, int tableLength) : base(tableLength)
         {
             Identity = identity;
+            Init(identity, tableLength);
+        }
+
+        public void Init()
+        {
+            Init(Identity, Identity.RoutingHash.BitCount);
+        }
+
+        private void Init(NodeInfo identity, int tableLength)
+        {
             var routingHash = identity.RoutingHash;
 
             for (int i = 0; i < tableLength; ++i)

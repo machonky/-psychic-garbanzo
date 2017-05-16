@@ -4,14 +4,13 @@ using System.Threading;
 namespace CoreDht.Utils
 {
     /// <summary>
-    /// Based upon EventStore Scheduler. Added the ability to choose a locking scheme as well as control the 
+    /// Based upon EventStore Scheduler. 
     /// <br>
     /// </summary>
     public class ActionScheduler : IActionScheduler, IDisposable
     {
         protected IUtcClock Clock { get; }
         private readonly IActionTimer _timer;
-        private readonly LockingStrategy _lockingStrategy;
         private readonly PairingHeap<ScheduledAction> _actions = new PairingHeap<ScheduledAction>((x, y) => x.DueTime < y.DueTime);
         private readonly object _actionsToken = new object();
 
@@ -19,25 +18,13 @@ namespace CoreDht.Utils
 
         #region Various locking strategies
 
-        private interface ILockingStrategy : IDisposable
+        protected interface ILockingStrategy : IDisposable
         {
             void Lock();
             void Unlock();
         }
-
-        private struct NoLockingStrategy : ILockingStrategy
-        {
-            public void Dispose()
-            {}
-
-            public void Lock()
-            {}
-
-            public void Unlock()
-            {}
-        }
-
-        private struct DefaultLockingStrategy : ILockingStrategy
+        
+        protected struct DefaultLockingStrategy : ILockingStrategy
         {
             private bool _isDisposed;
             private readonly object _token;
@@ -70,17 +57,10 @@ namespace CoreDht.Utils
 
         #endregion
 
-        public enum LockingStrategy
-        {
-            None,
-            Default,
-        }
-
-        public ActionScheduler(IUtcClock clock, IActionTimer timer, LockingStrategy lockingStrategy)
+        public ActionScheduler(IUtcClock clock, IActionTimer timer)
         {
             Clock = clock;
             _timer = timer;
-            _lockingStrategy = lockingStrategy;
         }
 
         public void Stop()
@@ -88,12 +68,8 @@ namespace CoreDht.Utils
             Dispose();
         }
 
-        private ILockingStrategy NewLock()
+        protected virtual ILockingStrategy NewLock()
         {
-            if (_lockingStrategy == LockingStrategy.None)
-            {
-                return new NoLockingStrategy();
-            }
             return new DefaultLockingStrategy(_actionsToken);
         }
 

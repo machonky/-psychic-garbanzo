@@ -21,13 +21,28 @@ namespace CoreDht.Node
         public Action<string> LoggerDelegate { get; set; }
         public JoinConfiguration JoinSettings { get; }
         public AwaitConfiguration AwaitSettings { get; }
+        public StabilizeConfiguration StabilizeSettings { get; }
 
         public NodeConfiguration()
         {
             JoinSettings = new JoinConfiguration();
             AwaitSettings = new AwaitConfiguration();
+            StabilizeSettings = new StabilizeConfiguration();
+
             SuccessorCount = 3;
         }
+    }
+
+    public class StabilizeConfiguration
+    {
+        public StabilizeConfiguration()
+        {
+            StabilizeMinInterval = 120000;
+            StabilizeMaxInterval = 180000;
+        }
+
+        public int StabilizeMinInterval { get; set; }
+        public int StabilizeMaxInterval { get; set; }
     }
 
     public class JoinConfiguration

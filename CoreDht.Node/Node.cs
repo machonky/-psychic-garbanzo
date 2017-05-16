@@ -18,6 +18,7 @@ namespace CoreDht.Node
         public NodeConfiguration Config { get; }
         public NodeInfo Predecessor { get; private set; }
         protected IUtcClock Clock { get; }
+        protected ICorrelationFactory<CorrelationId> CorrelationFactory { get; }
         protected MemoryBus MessageBus { get; }
         protected DisposableStack Janitor { get; }
         private NetMQPoller Poller { get; }
@@ -36,11 +37,12 @@ namespace CoreDht.Node
 
         protected Node(NodeInfo identity, NodeConfiguration config)
         {
-            Identity = identity;
             Config = config;
-            Predecessor = null;
+            Identity = identity;
+            Predecessor = Identity;
 
             Clock = Config.Clock;
+            CorrelationFactory = Config.CorrelationFactory;
             Janitor = new DisposableStack();
             MessageBus = new MemoryBus();
             Poller = Janitor.Push(new NetMQPoller());
@@ -67,6 +69,8 @@ namespace CoreDht.Node
             var awaitHandler = Janitor.Push(new AwaitAckHandler(ActionScheduler, ExpiryCalculator, Marshaller, Actor, Log, Config.AwaitSettings));
             MessageBus.Subscribe(awaitHandler);
             MessageBus.Subscribe(new JoinNetworkHandler(this));
+            MessageBus.Subscribe(new StabilizeHandler(this));
+            MessageBus.Subscribe(new RectifyHandler(this));
 
             FingerTable = new FingerTable(Identity, Identity.RoutingHash.BitCount);
             SuccessorTable = new SuccessorTable(Identity, Config.SuccessorCount);
@@ -94,38 +98,14 @@ namespace CoreDht.Node
 
         private void InitJoin()
         {
-            var seedNode = Config.SeedNode;
-            Log("Beginning Join");
+            var socket = ForwardingSockets[Identity.HostAndPort];
+            Marshaller.Send(new InitJoin(), socket);
+        }
 
-            var opId = Config.CorrelationFactory.GetNextCorrelation();
-            var seedNodeInfo = CalcNodeInfo(seedNode);
-
-            var startTime = Clock.Now;
-
-            var responseHandler = CreateAwaitAllResponsesHandler();
-            responseHandler
-                .PerformAction(() =>
-                {
-                    Log($"QueryJoinNetwork: Querying {seedNodeInfo} Id:{opId}");
-                    var msg = new QueryJoinNetwork(Identity, seedNodeInfo, opId)
-                    {
-                        RoutingTable = this.FingerTable.Entries,
-                    };
-                    var socket = ForwardingSockets[seedNode];
-                    Marshaller.Send(msg, socket);
-                })
-                .AndAwait(opId, (QueryJoinNetworkReply reply) =>
-                {
-                    Log($"QueryJoinNetworkReply: Reply from {reply.From} Id:{reply.CorrelationId}");
-                    Log($"Join took {(Clock.Now - startTime).Milliseconds} ms");
-
-                    Log($"Assigning successor {reply.SuccessorTable[0].SuccessorIdentity}");
-
-                    SuccessorTable.Copy(reply.SuccessorTable);
-                    FingerTable.Copy(reply.RoutingTable);
-                })
-                .ContinueWith(() => {})
-                .Run(opId);
+        private void InitStabilize()
+        {
+            var socket = ForwardingSockets[Identity.HostAndPort];
+            Marshaller.Send(new InitStabilize(), socket);
         }
 
         public static string CreateIdentifier(string hostAndPort, int vNodeIndex = -1)
@@ -191,33 +171,29 @@ namespace CoreDht.Node
 
         private void ShimOnReceiveReady(object sender, NetMQSocketEventArgs args)
         {
-            // Unmarshal the message to the message bus
+            // Unmarshall the message to the message bus
             var mqMsg = args.Socket.ReceiveMultipartMessage();
-            if (mqMsg[0].ConvertToString() != NetMQActor.EndShimMessage)
+            var typeCode = mqMsg[0].ConvertToString();
+            switch (typeCode)
             {
-                var typeCode = mqMsg[0].ConvertToString();
-                switch (typeCode)
-                {
-                    //case NodeMarshaller.RoutableMessage:
-                    //    UnmarshalRoutableMsg(mqMsg);
-                    //    break;
-                    case NodeMarshaller.NodeMessage:
-                        UnMarshallNodeMsg(mqMsg);
-                        break;
-                    case NodeMarshaller.InternalMessage:
-                        UnMarshallMessage(mqMsg);
-                        break;
-                }
-            }
-            else
-            {
-                Log($"Node terminating.");
+                //case NodeMarshaller.RoutableMessage:
+                //    UnmarshalRoutableMsg(mqMsg);
+                //    break;
+                case NodeMarshaller.PointToPointMessage:
+                    UnMarshallPointToPointMsg(mqMsg);
+                    break;
+                case NodeMarshaller.InternalMessage:
+                    UnMarshallMessage(mqMsg);
+                    break;
+                case NetMQActor.EndShimMessage:
+                    Log($"Node terminating.");
+                    break;
             }
         }
 
-        private void UnMarshallNodeMsg(NetMQMessage mqMsg)
+        private void UnMarshallPointToPointMsg(NetMQMessage mqMsg)
         {
-            NodeMessage msg;
+            PointToPointMessage msg;
             Marshaller.Unmarshall(mqMsg, out msg);
             MessageBus.Publish(msg);
         }
@@ -249,7 +225,7 @@ namespace CoreDht.Node
             Poller.Stop();
         }
 
-        protected void SendAckMessage(INodeMessage message, CorrelationId correlationId)
+        protected void SendAckMessage(IPointToPointMessage message, CorrelationId correlationId)
         {
             // Send an interim reply to verify the health of the network
             var replySocket = ForwardingSockets[message.From.HostAndPort];

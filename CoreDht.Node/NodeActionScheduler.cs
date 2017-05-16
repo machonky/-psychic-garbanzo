@@ -15,7 +15,7 @@ namespace CoreDht.Node
         private readonly IOutgoingSocket _actorSocket;
 
         public NodeActionScheduler(IUtcClock clock, IActionTimer timer, INodeMarshaller marshaller, IOutgoingSocket actorSocket) 
-            : base(clock, timer, LockingStrategy.None)
+            : base(clock, timer)
         {
             _marshaller = marshaller;
             _actorSocket = actorSocket;
@@ -24,6 +24,23 @@ namespace CoreDht.Node
         protected override void OnTimerFired()
         {
             _marshaller.Send(new TimerFired(), _actorSocket);
+        }
+
+        protected override ILockingStrategy NewLock()
+        {
+            return new NoLockingStrategy();
+        }
+
+        protected struct NoLockingStrategy : ILockingStrategy
+        {
+            public void Dispose()
+            { }
+
+            public void Lock()
+            { }
+
+            public void Unlock()
+            { }
         }
     }
 }

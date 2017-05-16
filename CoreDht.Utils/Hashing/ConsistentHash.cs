@@ -45,6 +45,7 @@ namespace CoreDht.Utils.Hashing
         }
 
         private int Rank => Bytes.Length;
+
         public int BitCount { get { return Rank*8; } }
 
         public int CompareTo(ConsistentHash other)

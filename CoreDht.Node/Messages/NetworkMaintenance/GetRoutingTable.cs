@@ -3,7 +3,7 @@ using CoreMemoryBus.Messages;
 
 namespace CoreDht.Node.Messages.NetworkMaintenance
 {
-    public class GetRoutingTable : NodeMessage, ICorrelatedMessage<CorrelationId>
+    public class GetRoutingTable : PointToPointMessage, ICorrelatedMessage<CorrelationId>
     {
         public GetRoutingTable(NodeInfo @from, NodeInfo to, CorrelationId correlationId) : base(@from, to)
         {

@@ -6,7 +6,7 @@ namespace CoreDht.Node
 {
     public interface INodeMarshaller 
         : INodeMarshaller<Message>
-        , INodeMarshaller<NodeMessage>
+        , INodeMarshaller<PointToPointMessage>
     {}
 
     public interface INodeMarshaller<T> where T:Message

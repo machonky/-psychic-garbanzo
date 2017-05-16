@@ -3,7 +3,7 @@ using CoreMemoryBus.Messages;
 
 namespace CoreDht.Node.Messages.NetworkMaintenance
 {
-    public class GetSuccessorTable : NodeMessage, ICorrelatedMessage<CorrelationId>
+    public class GetSuccessorTable : PointToPointMessage, ICorrelatedMessage<CorrelationId>
     {
         public GetSuccessorTable(NodeInfo @from, NodeInfo to, CorrelationId correlationId) : base(@from, to)
         {
