@@ -12,7 +12,11 @@ namespace CoreDht.Node.Messages.NetworkMaintenance
 
         public CorrelationId CorrelationId { get; }
 
-        public RoutingTableEntry[] SuccessorTableEntries { get; set; }
         public NodeInfo Predecessor { get; set; }
+
+        /// <summary>
+        /// Note that these entries are those of the predecessor
+        /// </summary>
+        public RoutingTableEntry[] SuccessorTableEntries { get; set; }
     }
 }
