@@ -101,12 +101,13 @@ namespace CoreDht.Utils.Hashing
 
         public override string ToString()
         {
-            var hexString = new StringBuilder(Bytes.Length * 2);
-            foreach (var b in Bytes.Reverse())
-            {
-                hexString.AppendFormat("{0:x2}", b);
-            }
-            return hexString.ToString();
+            return Base58Check.Base58CheckEncoding.Encode(Bytes);
+            //var hexString = new StringBuilder(Bytes.Length * 2);
+            //foreach (var b in Bytes.Reverse())
+            //{
+            //    hexString.AppendFormat("{0:x2}", b);
+            //}
+            //return hexString.ToString();
         }
 
         public override int GetHashCode()
