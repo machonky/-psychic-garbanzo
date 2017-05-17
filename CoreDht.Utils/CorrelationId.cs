@@ -153,7 +153,7 @@ namespace CoreDht.Utils
 
         /// <summary>
         /// Creates a new instance of a Guid using the string value, 
-        /// then returns the base64 encoded version of the Guid.
+        /// then returns the base58 encoded version of the Guid.
         /// </summary>
         /// <param name="value">An actual Guid string (i.e. not a CorrelationId)</param>
         /// <returns></returns>
