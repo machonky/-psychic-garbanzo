@@ -32,6 +32,8 @@ namespace CoreDht.Node
         private IActionScheduler ActionScheduler { get; }
         private IExpiryTimeCalculator ExpiryCalculator { get; }
         private INodeMarshaller Marshaller { get; }
+        public ICommunicationManager CommunicationManager { get; }
+
 
         public NodeInfo Successor => SuccessorTable[0].SuccessorIdentity;
 
@@ -56,8 +58,12 @@ namespace CoreDht.Node
 
             ForwardingSockets = Janitor.Push(new SocketCache(Config.NodeSocketFactory, Clock)); // Chicken and egg scenario where we require an actor!
 
+            CommunicationManager = config.CommunicationManagerFactory.Create(Identity, Marshaller, ForwardingSockets, MessageBus, Log);
+
             Actor = Janitor.Push(CreateActor());
             ForwardingSockets.AddActor(Identity.HostAndPort, Actor);
+
+
             Janitor.Push(new DisposableAction(() => { Poller.Remove(ListeningSocket); }));
 
             Janitor.Push(new DisposableAction(
@@ -68,16 +74,18 @@ namespace CoreDht.Node
             MessageBus.Subscribe(new NodeHandler(this, ActionScheduler));
             var awaitHandler = Janitor.Push(new AwaitAckHandler(ActionScheduler, ExpiryCalculator, Marshaller, Actor, Log, Config.AwaitSettings));
             MessageBus.Subscribe(awaitHandler);
-            MessageBus.Subscribe(new JoinNetworkHandler(this));
-            MessageBus.Subscribe(new StabilizeHandler(this));
-            MessageBus.Subscribe(new RectifyHandler(this));
+            MessageBus.Subscribe(new JoinNetworkHandler(this, CommunicationManager));
+            MessageBus.Subscribe(new StabilizeHandler(this, CommunicationManager));
+            MessageBus.Subscribe(new RectifyHandler(this, CommunicationManager));
+            MessageBus.Subscribe(new NotifyHandler(this, CommunicationManager));
 
             FingerTable = new FingerTable(Identity, Identity.RoutingHash.BitCount);
             SuccessorTable = new SuccessorTable(Identity, Config.SuccessorCount);
 
             // Let everything know we're ready to go.
             Log($"Sending NodeInitialised");
-            Marshaller.Send(new NodeInitialised(), Actor);
+            //Marshaller.Send(new NodeInitialised(), Actor);
+            CommunicationManager.SendInternal(new NodeInitialised());
         }
 
         protected virtual void OnInitialised()
@@ -92,20 +100,8 @@ namespace CoreDht.Node
                 Log($"Join Timeout {timeout} ms");
 
                 var dueTime = ExpiryCalculator.CalcExpiry(timeout);
-                ActionScheduler.ScheduleAction(dueTime, null, _ => { InitJoin(); });
+                ActionScheduler.ScheduleAction(dueTime, null, _ => { CommunicationManager.SendInternal(new InitJoin()); });
             }
-        }
-
-        private void InitJoin()
-        {
-            var socket = ForwardingSockets[Identity.HostAndPort];
-            Marshaller.Send(new InitJoin(), socket);
-        }
-
-        private void InitStabilize()
-        {
-            var socket = ForwardingSockets[Identity.HostAndPort];
-            Marshaller.Send(new InitStabilize(), socket);
         }
 
         public static string CreateIdentifier(string hostAndPort, int vNodeIndex = -1)
@@ -171,38 +167,8 @@ namespace CoreDht.Node
 
         private void ShimOnReceiveReady(object sender, NetMQSocketEventArgs args)
         {
-            // Unmarshall the message to the message bus
             var mqMsg = args.Socket.ReceiveMultipartMessage();
-            var typeCode = mqMsg[0].ConvertToString();
-            switch (typeCode)
-            {
-                //case NodeMarshaller.RoutableMessage:
-                //    UnmarshalRoutableMsg(mqMsg);
-                //    break;
-                case NodeMarshaller.PointToPointMessage:
-                    UnMarshallPointToPointMsg(mqMsg);
-                    break;
-                case NodeMarshaller.InternalMessage:
-                    UnMarshallMessage(mqMsg);
-                    break;
-                case NetMQActor.EndShimMessage:
-                    Log($"Node terminating.");
-                    break;
-            }
-        }
-
-        private void UnMarshallPointToPointMsg(NetMQMessage mqMsg)
-        {
-            PointToPointMessage msg;
-            Marshaller.Unmarshall(mqMsg, out msg);
-            MessageBus.Publish(msg);
-        }
-
-        private void UnMarshallMessage(NetMQMessage mqMsg)
-        {                                                                                                                                                                                                            
-            Message msg;
-            Marshaller.Unmarshall(mqMsg, out msg);
-            MessageBus.Publish(msg);
+            CommunicationManager.Receive(mqMsg);
         }
 
         private bool IsInDomain(ConsistentHash hash)
@@ -223,13 +189,6 @@ namespace CoreDht.Node
         protected void Terminate()
         {
             Poller.Stop();
-        }
-
-        protected void SendAckMessage(IPointToPointMessage message, CorrelationId correlationId)
-        {
-            // Send an interim reply to verify the health of the network
-            var replySocket = ForwardingSockets[message.From.HostAndPort];
-            Marshaller.Send(new AckMessage(correlationId), replySocket);
         }
         
         #region IDisposable Support

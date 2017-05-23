@@ -33,6 +33,7 @@ namespace NetworkRouting
                     Random = _random,
                     ActionTimerFactory = _actionTimerFactory,
                     MarshallerFactory = _marshallerFactory,
+                    CommunicationManagerFactory = _communicationManagerFactory,
                 };
 
                 var factory = new MyAppNodeFactory(config);
@@ -44,7 +45,7 @@ namespace NetworkRouting
 
                 nodes.Add(janitor.Push(factory.CreateNode(id0, hostAndPort0)));
 
-                for (int i = 9001; i < 9003; ++i)
+                for (int i = 9001; i < 9002; ++i)
                 {
                     var hostAndPort = $"{hostEntry.HostName}:{i}";
                     var id = Node.CreateIdentifier(hostAndPort);
@@ -58,6 +59,7 @@ namespace NetworkRouting
                 //    Console.WriteLine($"{node.Identity}\tS: {node.Successor}\tP: {node.Predecessor}");
                 //}
                 Console.ReadKey();
+                //Console.ReadKey();
 
                 //var terminate = new TerminateNode(node0.Identity.RoutingHash);
                 //node0.Publish(terminate);
@@ -82,6 +84,7 @@ namespace NetworkRouting
         private readonly IExpiryTimeCalculator _expiryCalculator;
         private readonly IRandomNumberGenerator _random;
         private readonly INodeMarshallerFactory _marshallerFactory;
+        private readonly ICommunicationManagerFactory _communicationManagerFactory;
         private const int SeedPort = 9000;
 
         Program()
@@ -96,6 +99,7 @@ namespace NetworkRouting
             _expiryCalculator = new ExpiryTimeCalculator(_clock);
             _random = new RandomNumberGenerator(_correlationFactory);
             _marshallerFactory = new NodeMarshallerFactory(_msgSerializer);
+            _communicationManagerFactory = new CommunicationManagerFactory();
         }
 
         static void Main(string[] args)

@@ -50,8 +50,13 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommunicationManager.cs" />
+    <Compile Include="CommunicationManagerFactory.cs" />
     <Compile Include="Handlers\Node.StabilizeHandler.cs" />
     <Compile Include="Handlers\Node.RectifyHandler.cs" />
+    <Compile Include="Handlers\Node.NotifyHandler.cs" />
+    <Compile Include="ICommunicationManager.cs" />
+    <Compile Include="ICommunicationManagerFactory.cs" />
     <Compile Include="ISocketCache.cs" />
     <Compile Include="Messages\Internal\AwaitWithTimeoutMessage.cs" />
     <Compile Include="Messages\Internal\InitJoin.cs" />
@@ -64,6 +69,8 @@
     <Compile Include="Messages\NetworkMaintenance\GetRoutingEntryReply.cs" />
     <Compile Include="Messages\NetworkMaintenance\GetSuccessorTable.cs" />
     <Compile Include="Messages\NetworkMaintenance\StabilizeReply.cs" />
+    <Compile Include="Messages\NetworkMaintenance\Notify.cs" />
+    <Compile Include="Messages\NetworkMaintenance\NotifyReply.cs" />
     <Compile Include="OutgoingSocket.cs" />
     <Compile Include="FingerTable.cs" />
     <Compile Include="Handlers\Node.JoinNetworkHandler.cs" />

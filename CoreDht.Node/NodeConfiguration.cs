@@ -15,6 +15,7 @@ namespace CoreDht.Node
         public IActionTimerFactory ActionTimerFactory { get; set; }
         public IExpiryTimeCalculator ExpiryCalculator { get; set; }
         public INodeMarshallerFactory MarshallerFactory { get; set; }
+        public ICommunicationManagerFactory CommunicationManagerFactory { get; set; }
 
         public int SuccessorCount { get; set; }
         public string SeedNode { get; set; }

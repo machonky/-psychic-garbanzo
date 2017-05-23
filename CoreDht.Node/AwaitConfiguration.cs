@@ -13,7 +13,12 @@ namespace CoreDht.Node
 
         public AwaitConfiguration()
         {
-            AwaitTimeout = AwaitDefault;
+            AwaitTimeout
+#if DEBUG
+                = int.MaxValue;
+#else
+                = AwaitDefault;
+#endif
             AckTimeout = AckDefault;
             NetworkQueryTimeout = NetworkQueryDefault;
             InitTimeout = 500;

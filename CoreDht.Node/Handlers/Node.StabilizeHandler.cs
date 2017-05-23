@@ -12,16 +12,22 @@ namespace CoreDht.Node
             , IHandle<Stabilize>
         {
             private readonly Node _node;
+            private readonly ICommunicationManager _commMgr;
 
-            public StabilizeHandler(Node node)
+            public StabilizeHandler(Node node, ICommunicationManager commMgr)
             {
                 _node = node;
+                _commMgr = commMgr;
             }
 
             public void Handle(InitStabilize message)
             {
                 ScheduleNextStabilize();
+                Stabilize(_node.Successor);
+            }
 
+            private void Stabilize(NodeInfo successorInfo)
+            {
                 // Send a stabilize message to my successor to learn it's predecessor
                 //   Stabilize might need to be retried as other nodes will be joining at the same location as it is a seed node.
 
@@ -30,15 +36,13 @@ namespace CoreDht.Node
                 messageHandler
                     .PerformAction(() =>
                     {
-                        var msg = new Stabilize(_node.Identity, _node.Successor, opId);
-                        var forwardingSocket =_node.ForwardingSockets[_node.Successor.HostAndPort];
-                        _node.Marshaller.Send(msg, forwardingSocket);
+                        _commMgr.Send(new Stabilize(_node.Identity, successorInfo, opId));
                     })
                     .AndAwait(opId, (StabilizeReply reply) =>
                     {
                         var thisHash = _node.Identity.RoutingHash;
                         var predecessorHash = reply.Predecessor.RoutingHash;
-                        var successorHash = _node.Successor.RoutingHash;
+                        var successorHash = successorInfo.RoutingHash;
 
                         // We need to check the order of the predecessor or the successor before adopting a value
                         // as nodes are racing to join the seed node - our last query may be out of date, but not by much
@@ -50,7 +54,7 @@ namespace CoreDht.Node
                         else if (predecessorHash.IsBetween(thisHash, successorHash))
                         {
                             // another node beat this one to join to the successor, changing the ordering...
-                            StabilizeFromPredecessor();
+                            StabilizeFromPredecessor(reply);
                         }
                     })
                     .Run(opId);
@@ -61,16 +65,15 @@ namespace CoreDht.Node
                 _node.Predecessor = reply.Predecessor;
                 _node.SuccessorTable.Copy(reply.SuccessorTableEntries);
 
-                var nextMsg = new InitRectify();
-                var forwardingSocket = _node.ForwardingSockets[_node.Identity.HostAndPort];
-                _node.Marshaller.Send(nextMsg, forwardingSocket);
+                _commMgr.SendInternal(new InitRectify());
             }
 
-            private void StabilizeFromPredecessor()
+            private void StabilizeFromPredecessor(StabilizeReply reply)
             {
-                // StabilizeFromPredecessor...
                 // The predecessor is a better successor than the current one.
                 // We should quit this operation and stabilize against the precedessor
+                _commMgr.SendInternal(new CancelOperation(reply.CorrelationId));
+                Stabilize(reply.Predecessor);
             }
 
             private void ScheduleNextStabilize()
@@ -81,7 +84,7 @@ namespace CoreDht.Node
                 var interval = _node.Config.Random.Next(min, max);
 
                 var dueTime = _node.ExpiryCalculator.CalcExpiry(interval);
-                _node.ActionScheduler.ScheduleAction(dueTime, null, _ => _node.InitStabilize());
+                _node.ActionScheduler.ScheduleAction(dueTime, null, _ => _commMgr.SendInternal(new InitStabilize()));
             }
 
             public void Handle(Stabilize message)
@@ -89,12 +92,11 @@ namespace CoreDht.Node
                 var reply = new StabilizeReply(_node.Identity, message.From, message.CorrelationId)
                 {
                     Predecessor = _node.Predecessor,
-                    SuccessorTableEntries = _node.SuccessorTable.Entries,
                     // Take the opportunity to ensure the successor table is up to date.
+                    SuccessorTableEntries = _node.SuccessorTable.Entries,
                 };
 
-                var forwardingSocket = _node.ForwardingSockets[message.From.HostAndPort];
-                _node.Marshaller.Send(reply, forwardingSocket);
+                _commMgr.Send(reply);
             }
         }
     }
