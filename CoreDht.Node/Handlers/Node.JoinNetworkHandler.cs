@@ -28,11 +28,12 @@ namespace CoreDht.Node
 
             public void Handle(InitJoin message)
             {
+                _node.LogMessage(message);
+
                 _node.Predecessor = _node.Identity;
                 _node.FingerTable.Init();
 
                 var seedNode = _node.Config.SeedNode;
-                _node.Log("Beginning Join");
 
                 var opId = _node.Config.CorrelationFactory.GetNextCorrelation();
                 var seedNodeInfo = _node.CalcNodeInfo(seedNode);
@@ -55,9 +56,10 @@ namespace CoreDht.Node
                     })
                     .AndAwait(opId, (JoinNetworkReply reply) =>
                     {
-                        _node.Log($"JoinNetworkReply: Reply from {reply.From} Id:{reply.CorrelationId}");
-                        _node.Log($"Join took {(_node.Clock.Now - startTime).Milliseconds} ms");
+                        _node.LogMessage(reply);
 
+                        _node.Log($"Reply from {reply.From} Id:{reply.CorrelationId}");
+                        _node.Log($"Join took {(_node.Clock.Now - startTime).Milliseconds} ms");
                         _node.Log($"Assigning successor {reply.SuccessorTable[0].SuccessorIdentity}");
 
                         _node.SuccessorTable.Copy(reply.SuccessorTable);
@@ -74,7 +76,8 @@ namespace CoreDht.Node
 
             public void Handle(JoinNetwork message)
             {
-                _node.Log($"Received JoinNetwork from {message.From}");
+                _node.LogMessage(message);
+                _node.Log($"Received from {message.From}");
                 _commMgr.SendAck(message, message.CorrelationId);
 
                 var routingCorrelation = GetNextCorrelation();
@@ -148,6 +151,7 @@ namespace CoreDht.Node
                 var applicant = message.Applicant;
                 if (_node.IsInDomain(applicant.RoutingHash))
                 {
+                    _node.Log($"{applicant} IsInDomain");
                     // the predecessors successor table will become the applicant's if the applicant node
                     // becomes the new predecessor. The head of the predecessors table is this node.
 
@@ -181,8 +185,9 @@ namespace CoreDht.Node
                 }
                 else // Ask the network
                 {
-                    var closestNode = _node.FingerTable.FindClosestPrecedingFinger(applicant.RoutingHash);
+                    var closestNode = _node.SuccessorTable.FindClosestPrecedingFinger(applicant.RoutingHash);
                     message.To = closestNode;
+                    _node.Log($"Routing GetSuccessorTable {closestNode}");
                     _commMgr.Send(message);
                 }
             }

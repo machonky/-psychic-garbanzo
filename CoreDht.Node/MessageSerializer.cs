@@ -17,7 +17,7 @@ namespace CoreDht.Node
 
         public TMessage Deserialize<TMessage>(string json) where TMessage:Message
         {
-            return JsonConvert.DeserializeObject<TMessage>(json, _settings);
+             return JsonConvert.DeserializeObject<TMessage>(json, _settings);
         }
     }
 }

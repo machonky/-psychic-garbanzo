@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using CoreDht.Node.Messages.Internal;
+﻿using CoreDht.Node.Messages.Internal;
 using CoreDht.Node.Messages.NetworkMaintenance;
 using CoreMemoryBus;
 
@@ -10,7 +9,7 @@ namespace CoreDht.Node
         public class RectifyHandler
             : IHandle<InitRectify>
             , IHandle<Rectify>
-            , IHandle<RectifyReply>
+            //, IHandle<RectifyReply>
         {
             private readonly Node _node;
             private readonly ICommunicationManager _commMgr;
@@ -23,6 +22,8 @@ namespace CoreDht.Node
 
             public void Handle(InitRectify message)
             {
+                _node.LogMessage(message);
+
                 // Notify the successor to update it's predecessor with this node's info
                 var opId = _node.Config.CorrelationFactory.GetNextCorrelation();
                 var handler =_node.CreateAwaitAllResponsesHandler();
@@ -30,11 +31,15 @@ namespace CoreDht.Node
                     .PerformAction(() =>
                     {
                         _node.Log($"Sending Rectify to {_node.Successor} Id:{opId}");
-                        var msg = new Rectify(_node.Identity, _node.Successor, opId) {Predecessor = _node.Identity};
+                        var msg = new Rectify(_node.Identity, _node.Successor, opId)
+                        {
+                            Predecessor = _node.Identity
+                        };
                         _commMgr.Send(msg);
                     })
                     .AndAwait(opId, (RectifyReply reply) =>
                     {
+                        _node.LogMessage(reply);
                         _node.Log($"{_node.Identity} Joined Network");
                     })
                     .Run(opId);
@@ -42,6 +47,8 @@ namespace CoreDht.Node
 
             public void Handle(Rectify message)
             {
+                _node.LogMessage(message);
+
                 // Assign this node's predecessor to the value supplied.
                 var oldPredecessor = _node.Predecessor;
                 _node.Predecessor = message.Predecessor;
@@ -55,15 +62,16 @@ namespace CoreDht.Node
                         .PerformAction(() =>
                         {
                             // notify the old predecessor to join to the new predecessor
+                            _node.Log($"Notify {oldPredecessor} Id:{opId}");
                             var msg = new Notify(_node.Identity, oldPredecessor, opId)
                             {
                                 NewSuccessor = message.Predecessor,
                             };
                             _commMgr.Send(msg);
                         })
-                        .AndAwait(opId, (NotifyReply stabReply) =>
+                        .AndAwait(opId, (NotifyReply notifyReply) =>
                         {
-                            
+                            _node.Log($"NotifyReply Id:{opId}");
                         })
                         .Run(opId);
                 }
@@ -72,10 +80,10 @@ namespace CoreDht.Node
                 _commMgr.Send(reply);
             }
 
-            public void Handle(RectifyReply message)
-            {
-                // this node is now a live node and can handle application messages.
-            }
+            //public void Handle(RectifyReply message)
+            //{
+            //    // this node is now a live node and can handle application messages.
+            //}
         }
     }
 }

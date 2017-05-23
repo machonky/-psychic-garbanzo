@@ -45,21 +45,26 @@ namespace NetworkRouting
 
                 nodes.Add(janitor.Push(factory.CreateNode(id0, hostAndPort0)));
 
-                for (int i = 9001; i < 9002; ++i)
+                for (int i = 9001; i < 9003; ++i)
                 {
                     var hostAndPort = $"{hostEntry.HostName}:{i}";
                     var id = Node.CreateIdentifier(hostAndPort);
                     nodes.Add(janitor.Push(factory.CreateNode(id, hostAndPort)));
-                    Thread.Sleep(500);
+                    Thread.Sleep(1000);
                 }
 
-                Console.WriteLine();
-                //foreach (var node in nodes)
-                //{
-                //    Console.WriteLine($"{node.Identity}\tS: {node.Successor}\tP: {node.Predecessor}");
-                //}
+                Thread.Sleep(1000);
+                Console.WriteLine("***** Connectivity Summary *****");
+
+
                 Console.ReadKey();
-                //Console.ReadKey();
+
+                foreach (var node in nodes)
+                {
+                    Console.WriteLine($"{node.Identity}\tS: {node.Successor}\tP: {node.Predecessor}");
+                }
+
+                Console.ReadKey();
 
                 //var terminate = new TerminateNode(node0.Identity.RoutingHash);
                 //node0.Publish(terminate);

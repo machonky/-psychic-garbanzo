@@ -114,10 +114,14 @@ namespace CoreDht.Node
         {
             return $"{hostNameOrAddress}:{port}";
         }
-        
+
         internal void Log(string logMsg)
         {
-            Logger?.Invoke($"{Identity} {logMsg}");
+            Logger?.Invoke($"{Clock.Now.ToString("HH:mm:ss.fff")}\t{Identity}\t{logMsg}");
+        }
+        internal void LogMessage(Message msg)
+        {
+            Log($"{msg.GetType().Name}");
         }
 
         internal AwaitAllResponsesHandler CreateAwaitAllResponsesHandler()
