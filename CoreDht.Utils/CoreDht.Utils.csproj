@@ -53,6 +53,7 @@
     <Compile Include="ActionScheduler.cs" />
     <Compile Include="ActionTimer.cs" />
     <Compile Include="ActionTimerFactory.cs" />
+    <Compile Include="MessageExtensions.cs" />
     <Compile Include="UtcClock.cs" />
     <Compile Include="ExpiryTimeCalculator.cs" />
     <Compile Include="Hashing\ConsistentHash.cs" />

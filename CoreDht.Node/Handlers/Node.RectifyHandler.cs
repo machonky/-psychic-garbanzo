@@ -1,5 +1,6 @@
 ﻿using CoreDht.Node.Messages.Internal;
 using CoreDht.Node.Messages.NetworkMaintenance;
+using CoreDht.Utils;
 using CoreMemoryBus;
 
 namespace CoreDht.Node
@@ -54,36 +55,29 @@ namespace CoreDht.Node
                 _node.Predecessor = message.Predecessor;
                 _node.Log($"Rectify Assigned predecessor:{message.Predecessor}");
 
-                //if (oldPredecessor != _node.Identity)
-                {
-                    var opId = _node.Config.CorrelationFactory.GetNextCorrelation();
-                    var handler = _node.CreateAwaitAllResponsesHandler();
-                    handler
-                        .PerformAction(() =>
+                var opId = _node.Config.CorrelationFactory.GetNextCorrelation();
+                var handler = _node.CreateAwaitAllResponsesHandler();
+                handler
+                    .PerformAction(() =>
+                    {
+                        // notify the old predecessor to join to the new predecessor
+                        _node.Log($"Notify {oldPredecessor} Id:{opId}");
+                        var msg = new Notify(_node.Identity, oldPredecessor, opId)
                         {
-                            // notify the old predecessor to join to the new predecessor
-                            _node.Log($"Notify {oldPredecessor} Id:{opId}");
-                            var msg = new Notify(_node.Identity, oldPredecessor, opId)
-                            {
-                                NewSuccessor = message.Predecessor,
-                            };
-                            _commMgr.Send(msg);
-                        })
-                        .AndAwait(opId, (NotifyReply notifyReply) =>
-                        {
-                            _node.Log($"NotifyReply Id:{opId}");
-                        })
-                        .Run(opId);
-                }
+                            NewSuccessor = message.Predecessor,
+                        };
+                        _node.Log($"Sending {msg.TypeName()} To {msg.To} Id:{opId}");
+                        _commMgr.Send(msg);
+                    })
+                    .AndAwait(opId, (NotifyReply notifyReply) =>
+                    {
+                        _node.Log($"NotifyReply Id:{opId}");
+                    })
+                    .Run(opId);
 
                 var reply = new RectifyReply(_node.Identity, message.From, message.CorrelationId);
                 _commMgr.Send(reply);
             }
-
-            //public void Handle(RectifyReply message)
-            //{
-            //    // this node is now a live node and can handle application messages.
-            //}
         }
     }
 }

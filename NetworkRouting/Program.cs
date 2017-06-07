@@ -26,7 +26,7 @@ namespace NetworkRouting
                     NodeSocketFactory = _nodeSocketFactory,
                     Clock = _clock,
                     CorrelationFactory = _correlationFactory,
-                    SuccessorCount = 3,
+                    SuccessorCount = 2,
                     SeedNode = $"{hostEntry.HostName}:{SeedPort}",
                     LoggerDelegate = logger.WriteLine,
                     ExpiryCalculator = _expiryCalculator,

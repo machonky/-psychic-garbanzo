@@ -30,7 +30,7 @@ namespace CoreDht.Node
             AwaitSettings = new AwaitConfiguration();
             StabilizeSettings = new StabilizeConfiguration();
 
-            SuccessorCount = 3;
+            SuccessorCount = 2;
         }
     }
 

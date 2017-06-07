@@ -62,6 +62,7 @@
     <Compile Include="Messages\Internal\InitJoin.cs" />
     <Compile Include="Messages\Internal\InitRectify.cs" />
     <Compile Include="Messages\Internal\InitStabilize.cs" />
+    <Compile Include="Messages\Internal\JoinToSeed.cs" />
     <Compile Include="Messages\NetworkMaintenance\Rectify.cs" />
     <Compile Include="Messages\NetworkMaintenance\RectifyReply.cs" />
     <Compile Include="Messages\NetworkMaintenance\Stabilize.cs" />

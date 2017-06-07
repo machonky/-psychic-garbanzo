@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using CoreDht.Node.Messages;
 using CoreDht.Node.Messages.Internal;
-using CoreDht.Node.Messages.NetworkMaintenance;
 using CoreDht.Utils;
 using CoreDht.Utils.Hashing;
 using CoreMemoryBus.Messages;
@@ -55,17 +52,14 @@ namespace CoreDht.Node
 
             Log($"Binding to {Config.NodeSocketFactory.BindingConnectionString(Identity.HostAndPort)}");
             ListeningSocket = Janitor.Push(Config.NodeSocketFactory.CreateBindingSocket(Identity.HostAndPort));
-
             ForwardingSockets = Janitor.Push(new SocketCache(Config.NodeSocketFactory, Clock)); // Chicken and egg scenario where we require an actor!
 
             CommunicationManager = config.CommunicationManagerFactory.Create(Identity, Marshaller, ForwardingSockets, MessageBus, Log);
 
             Actor = Janitor.Push(CreateActor());
             ForwardingSockets.AddActor(Identity.HostAndPort, Actor);
-
-
+            
             Janitor.Push(new DisposableAction(() => { Poller.Remove(ListeningSocket); }));
-
             Janitor.Push(new DisposableAction(
                 () => { ListeningSocket.ReceiveReady += ListeningSocketReceiveReady; },
                 () => { ListeningSocket.ReceiveReady -= ListeningSocketReceiveReady; }));
@@ -83,8 +77,6 @@ namespace CoreDht.Node
             SuccessorTable = new SuccessorTable(Identity, Config.SuccessorCount);
 
             // Let everything know we're ready to go.
-            Log($"Sending NodeInitialised");
-            //Marshaller.Send(new NodeInitialised(), Actor);
             CommunicationManager.SendInternal(new NodeInitialised());
         }
 
@@ -126,7 +118,7 @@ namespace CoreDht.Node
 
         internal AwaitAllResponsesHandler CreateAwaitAllResponsesHandler()
         {
-            return new AwaitAllResponsesHandler(MessageBus,MessageBus,Log);
+            return new AwaitAllResponsesHandler(MessageBus, MessageBus, Log);
         }
 
         private NodeInfo CalcNodeInfo(string hostAndPort)

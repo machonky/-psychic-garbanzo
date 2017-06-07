@@ -30,6 +30,7 @@ namespace CoreDht.Node
 
             public void Handle(NodeInitialised message)
             {
+                _node.LogMessage(message);
                 _node.OnInitialised();
             }
 

@@ -12,6 +12,7 @@ namespace CoreDht.Node
         public class JoinNetworkHandler
             : IHandle<InitJoin>
             , IHandle<JoinNetwork>
+            , IHandle<JoinToSeed>
             , IHandle<GetSuccessorTable>
             , IHandle<GetRoutingEntry>
         {
@@ -30,42 +31,50 @@ namespace CoreDht.Node
             {
                 _node.LogMessage(message);
 
+                var seedNode = _node.Config.SeedNode;
+                var seedNodeInfo = _node.CalcNodeInfo(seedNode);
+
+                // this needs to be on a retry mechanism
+                JoinToSeed(seedNodeInfo);
+                //_commMgr.SendInternal(new JoinToSeed {SeedNode = seedNodeInfo,});
+            }
+
+            public void Handle(JoinToSeed message)
+            {
+                _node.Log($"{message.TypeName()} SeedNode:{message.SeedNode}");
+                JoinToSeed(message.SeedNode);
+            }
+
+            private void JoinToSeed(NodeInfo seedNodeInfo)
+            {
                 _node.Predecessor = _node.Identity;
                 _node.FingerTable.Init();
 
-                var seedNode = _node.Config.SeedNode;
-
                 var opId = _node.Config.CorrelationFactory.GetNextCorrelation();
-                var seedNodeInfo = _node.CalcNodeInfo(seedNode);
-
                 var startTime = _node.Clock.Now;
-
-                // this needs to be on a retry mechanism
 
                 var responseHandler = _node.CreateAwaitAllResponsesHandler();
                 responseHandler
                     .PerformAction(() =>
                     {
-                        _node.Log($"JoinNetwork: Querying {seedNodeInfo} Id:{opId}");
                         var msg = new JoinNetwork(_node.Identity, seedNodeInfo, opId)
                         {
                             RoutingTable = _node.FingerTable.Entries,
                         };
 
+                        _node.Log($"Sending {msg.TypeName()} To {seedNodeInfo} Id:{opId}");
                         _commMgr.Send(msg);
                     })
                     .AndAwait(opId, (JoinNetworkReply reply) =>
                     {
-                        _node.LogMessage(reply);
-
-                        _node.Log($"Reply from {reply.From} Id:{reply.CorrelationId}");
+                        _node.Log($"{reply.TypeName()} From {reply.From} Id:{reply.CorrelationId}");
                         _node.Log($"Join took {(_node.Clock.Now - startTime).Milliseconds} ms");
                         _node.Log($"Assigning successor {reply.SuccessorTable[0].SuccessorIdentity}");
 
                         _node.SuccessorTable.Copy(reply.SuccessorTable);
                         //_node.FingerTable.Copy(reply.RoutingTable);
 
-                    // This node has "joined" but is not in an ideal state as it is not part of the ring network yet.
+                        // This node has "joined" but is not in an ideal state as it is not part of the ring network yet.
                     })
                     .ContinueWith(() =>
                     {
@@ -74,10 +83,10 @@ namespace CoreDht.Node
                     .Run(opId);
             }
 
+
             public void Handle(JoinNetwork message)
             {
-                _node.LogMessage(message);
-                _node.Log($"Received from {message.From}");
+                _node.Log($"{message.TypeName()} From:{message.From}");
                 _commMgr.SendAck(message, message.CorrelationId);
 
                 var routingCorrelation = GetNextCorrelation();
@@ -130,6 +139,7 @@ namespace CoreDht.Node
                             HopCount = 0,
                         };
 
+                        _node.Log($"Sending {initialMessage.TypeName()} To {initialMessage.To} Id:{initialMessage.CorrelationId}");
                         _commMgr.SendInternal(initialMessage);
                     })
                     .AndAwait(operationId, (GetSuccessorTableReply successorReply) =>
@@ -146,6 +156,7 @@ namespace CoreDht.Node
 
             public void Handle(GetSuccessorTable message)
             {
+                _node.LogMessage(message);
                 _commMgr.SendAck(message, message.CorrelationId);
 
                 var applicant = message.Applicant;
@@ -175,11 +186,11 @@ namespace CoreDht.Node
                     {
                         // we've collected all the successors. Now send them home
                         var returnAddress = message.From;
-                        _node.Log($"Successor({message.HopCount}) found. Reply to {returnAddress}");
                         var reply = new GetSuccessorTableReply(_node.Identity, returnAddress, message.CorrelationId)
                         {
                             SuccessorTable = message.SuccessorTable,
                         };
+                        _node.Log($"Sending {reply.TypeName()} Successor({message.HopCount}) found.");
                         _commMgr.Send(reply);
                     }
                 }
@@ -187,7 +198,7 @@ namespace CoreDht.Node
                 {
                     var closestNode = _node.SuccessorTable.FindClosestPrecedingFinger(applicant.RoutingHash);
                     message.To = closestNode;
-                    _node.Log($"Routing GetSuccessorTable {closestNode}");
+                    _node.Log($"Routing {message.TypeName()} {message.To}");
                     _commMgr.Send(message);
                 }
             }

@@ -1,5 +1,6 @@
 ﻿using CoreDht.Node.Messages.Internal;
 using CoreDht.Node.Messages.NetworkMaintenance;
+using CoreDht.Utils;
 using CoreDht.Utils.Hashing;
 using CoreMemoryBus;
 
@@ -22,6 +23,7 @@ namespace CoreDht.Node
 
             public void Handle(InitStabilize message)
             {
+                _node.LogMessage(message);
                 ScheduleNextStabilize();
                 Stabilize(_node.Successor);
             }
@@ -36,7 +38,9 @@ namespace CoreDht.Node
                 messageHandler
                     .PerformAction(() =>
                     {
-                        _commMgr.Send(new Stabilize(_node.Identity, successorInfo, opId));
+                        var msg = new Stabilize(_node.Identity, successorInfo, opId);
+                        _node.Log($"Sending {msg.TypeName()} To:{msg.To} Id:{opId}");
+                        _commMgr.Send(msg);
                     })
                     .AndAwait(opId, (StabilizeReply reply) =>
                     {
@@ -62,6 +66,7 @@ namespace CoreDht.Node
 
             private void StabilizeFromSuccessor(StabilizeReply reply)
             {
+                _node.Log($"StabilizeFromSuccessor");
                 _node.Predecessor = reply.Predecessor;
                 _node.SuccessorTable.Copy(reply.SuccessorTableEntries);
 
@@ -70,10 +75,12 @@ namespace CoreDht.Node
 
             private void StabilizeFromPredecessor(StabilizeReply reply)
             {
+                _node.Log($"StabilizeFromPredecessor");
                 // The predecessor is a better successor than the current one.
                 // We should quit this operation and stabilize against the precedessor
                 _commMgr.SendInternal(new CancelOperation(reply.CorrelationId));
                 Stabilize(reply.Predecessor);
+                //_commMgr.SendInternal(new JoinToSeed {SeedNode = reply.Predecessor}); // this causes an infinite loop
             }
 
             private void ScheduleNextStabilize()
@@ -82,20 +89,27 @@ namespace CoreDht.Node
                 int min = _node.Config.StabilizeSettings.StabilizeMinInterval;
                 int max = _node.Config.StabilizeSettings.StabilizeMaxInterval;
                 var interval = _node.Config.Random.Next(min, max);
+#if DEBUG
+                interval = int.MaxValue;
+#endif
 
                 var dueTime = _node.ExpiryCalculator.CalcExpiry(interval);
+                _node.Log($"ScheduleNextStabilize Due:{dueTime}");
                 _node.ActionScheduler.ScheduleAction(dueTime, null, _ => _commMgr.SendInternal(new InitStabilize()));
             }
 
             public void Handle(Stabilize message)
             {
+                _node.LogMessage(message);
+                _commMgr.SendAck(message, message.CorrelationId);
+
                 var reply = new StabilizeReply(_node.Identity, message.From, message.CorrelationId)
                 {
                     Predecessor = _node.Predecessor,
                     // Take the opportunity to ensure the successor table is up to date.
                     SuccessorTableEntries = _node.SuccessorTable.Entries,
                 };
-
+                _node.Log($"Sending {reply.TypeName()} Id:{reply.CorrelationId}");
                 _commMgr.Send(reply);
             }
         }
