@@ -1,4 +1,5 @@
 ﻿using CoreDht.Node.Messages.NetworkMaintenance;
+using CoreDht.Utils;
 using CoreMemoryBus;
 
 namespace CoreDht.Node
@@ -19,7 +20,7 @@ namespace CoreDht.Node
 
             public void Handle(Notify message)
             {
-                _node.LogMessage(message);
+                _node.Log($"{message.TypeName()} From:{message.From}");
                 _commMgr.SendAck(message, message.CorrelationId);
 
                 // Let the predecessor know to join to the specified successor.

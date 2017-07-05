@@ -167,32 +167,54 @@ namespace CoreDht.Node
                     // becomes the new predecessor. The head of the predecessors table is this node.
 
                     var nextSuccessor = _node.Identity;
-                    message.SuccessorTable[message.HopCount] = new RoutingTableEntry(nextSuccessor.RoutingHash, nextSuccessor);
-
-                    var hopMax = _node.Config.SuccessorCount - 1;
-                    if (message.HopCount < hopMax)
+                    var returnAddress = message.From;
+                    var tableLength = _node.SuccessorTable.Length;
+                    var predecessorTable = new RoutingTableEntry[_node.SuccessorTable.Length];
+                    if (tableLength > 1)
                     {
-                        nextSuccessor = _node.Successor;
-                        _node.Log($"Successor({message.HopCount}) found. Forwarding to {nextSuccessor}");
-
-                        var forwardMsg = message;
-                        forwardMsg.To = nextSuccessor;
-                        forwardMsg.HopCount++;
-                        forwardMsg.Applicant = nextSuccessor; // we need to now follow a chain of successors
-
-                        _commMgr.Send(forwardMsg);
-                    }
-                    else
-                    {
-                        // we've collected all the successors. Now send them home
-                        var returnAddress = message.From;
-                        var reply = new GetSuccessorTableReply(_node.Identity, returnAddress, message.CorrelationId)
+                        var thisTable = _node.SuccessorTable;
+                        for (int i = 0; i < predecessorTable.Length - 1; i++)
                         {
-                            SuccessorTable = message.SuccessorTable,
-                        };
-                        _node.Log($"Sending {reply.TypeName()} Successor({message.HopCount}) found.");
-                        _commMgr.Send(reply);
+                            predecessorTable[i + 1] = thisTable[i];
+                        }
                     }
+
+                    predecessorTable[0] = new RoutingTableEntry(_node.Identity.RoutingHash, _node.Identity);
+
+                    var reply = new GetSuccessorTableReply(_node.Identity, returnAddress, message.CorrelationId)
+                    {
+                        SuccessorTable = predecessorTable,
+                    };
+                    _node.Log($"Sending {reply.TypeName()}");
+                    _commMgr.Send(reply);
+
+
+                    //message.SuccessorTable[message.HopCount] = new RoutingTableEntry(nextSuccessor.RoutingHash, nextSuccessor);
+
+                    //var hopMax = _node.Config.SuccessorCount - 1;
+                    //if (message.HopCount < hopMax)
+                    //{
+                    //    nextSuccessor = _node.Successor;
+                    //    _node.Log($"Successor({message.HopCount}) found. Forwarding to {nextSuccessor}");
+
+                    //    var forwardMsg = message;
+                    //    forwardMsg.To = nextSuccessor;
+                    //    forwardMsg.HopCount++;
+                    //    forwardMsg.Applicant = nextSuccessor; // we need to now follow a chain of successors
+
+                    //    _commMgr.Send(forwardMsg);
+                    //}
+                    //else
+                    //{
+                    //    // we've collected all the successors. Now send them home
+                    //    var returnAddress = message.From;
+                    //    var reply = new GetSuccessorTableReply(_node.Identity, returnAddress, message.CorrelationId)
+                    //    {
+                    //        SuccessorTable = message.SuccessorTable,
+                    //    };
+                    //    _node.Log($"Sending {reply.TypeName()} Successor({message.HopCount}) found.");
+                    //    _commMgr.Send(reply);
+                    //}
                 }
                 else // Ask the network
                 {

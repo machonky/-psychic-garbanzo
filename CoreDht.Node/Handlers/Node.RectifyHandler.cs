@@ -48,24 +48,26 @@ namespace CoreDht.Node
 
             public void Handle(Rectify message)
             {
-                _node.LogMessage(message);
+                _node.Log($"{message.TypeName()} From:{message.From} Id:{message.CorrelationId}");
 
                 // Assign this node's predecessor to the value supplied.
                 var oldPredecessor = _node.Predecessor;
                 _node.Predecessor = message.Predecessor;
-                _node.Log($"Rectify Assigned predecessor:{message.Predecessor}");
+                _node.Log($"{message.TypeName()} Predecessor:{message.Predecessor}");
 
                 var opId = _node.Config.CorrelationFactory.GetNextCorrelation();
                 var handler = _node.CreateAwaitAllResponsesHandler();
                 handler
                     .PerformAction(() =>
                     {
-                        // notify the old predecessor to join to the new predecessor
+                        // notify the old predecessor to join to the new predecessor.
+                        // The node shoud notify itself in the bootstrap case.
                         _node.Log($"Notify {oldPredecessor} Id:{opId}");
                         var msg = new Notify(_node.Identity, oldPredecessor, opId)
                         {
                             NewSuccessor = message.Predecessor,
                         };
+
                         _node.Log($"Sending {msg.TypeName()} To {msg.To} Id:{opId}");
                         _commMgr.Send(msg);
                     })
