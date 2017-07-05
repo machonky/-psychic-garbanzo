@@ -50,7 +50,7 @@ namespace NetworkRouting
                     var hostAndPort = $"{hostEntry.HostName}:{i}";
                     var id = Node.CreateIdentifier(hostAndPort);
                     nodes.Add(janitor.Push(factory.CreateNode(id, hostAndPort)));
-                    Thread.Sleep(1000);
+                    Thread.Sleep(1500);
                 }
 
                 Thread.Sleep(1000);
