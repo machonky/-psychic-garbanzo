@@ -14,6 +14,8 @@ namespace CoreDht.Node
 
         public RoutingTableEntry[] Entries { get; }
 
+        public int Length => Entries.Length;
+
         public RoutingTableEntry this[int index]
         {
             get { return Entries[index]; }
