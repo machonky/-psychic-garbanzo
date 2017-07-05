@@ -147,6 +147,7 @@ namespace CoreDht.Utils
         }
 
         #region IDisposable Support
+
         private bool _isDisposed = false;
 
         // Derived classes may also have disposable resources so we have to do this hack!
@@ -167,6 +168,7 @@ namespace CoreDht.Utils
         {
             Dispose(true);
         }
+
         #endregion
     }
 }
